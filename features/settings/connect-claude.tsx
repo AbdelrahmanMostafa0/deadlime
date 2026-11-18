@@ -22,7 +22,7 @@ const Step = ({ n, children }: { n: number; children: ReactNode }) => (
 export function ConnectClaude({ mcpUrl }: ConnectClaudeProps) {
   const local = isLocal(mcpUrl);
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <Card className="flex flex-col gap-4 p-5">
         <div>
           <h3 className="font-display-tight text-lg font-extrabold">Claude app</h3>

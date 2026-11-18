@@ -10,8 +10,10 @@ import { Sheet } from "@/components/ui/sheet";
 import { MOBILE_PRIMARY, NAV_ITEMS, isActive } from "./nav-items";
 import { UserMenu } from "./user-menu";
 
+// basis-0 keeps all four tabs the same width, so the capture button sits dead center.
 const tab =
-  "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-btn text-[11px] font-bold transition-spring";
+  "flex min-h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-btn border-2 border-transparent text-[11px] font-bold transition-spring";
+const activeTab = "border-ink bg-lime shadow-pop-xs";
 
 /** Mobile navigation: thumb zone, capture button in the middle. */
 export function BottomNav({ user }: { user: { name: string; image?: string | null } }) {
@@ -20,12 +22,13 @@ export function BottomNav({ user }: { user: { name: string; image?: string | nul
   const [moreOpen, setMoreOpen] = useState(false);
   const primary = NAV_ITEMS.filter((i) => (MOBILE_PRIMARY as readonly string[]).includes(i.href));
   const more = NAV_ITEMS.filter((i) => !(MOBILE_PRIMARY as readonly string[]).includes(i.href));
-  const [first, ...rest] = primary;
+  const left = primary.slice(0, 2);
+  const right = primary.slice(2);
 
   const link = ({ href, label, icon: Icon }: (typeof NAV_ITEMS)[number]) => {
     const active = isActive(pathname, href);
     return (
-      <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn(tab, active && "bg-lime")}>
+      <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn(tab, active && activeTab)}>
         <Icon aria-hidden className="size-[22px]" />
         {label}
       </Link>
@@ -39,7 +42,7 @@ export function BottomNav({ user }: { user: { name: string; image?: string | nul
         className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t-2 border-ink bg-paper-2 px-2 pt-1.5 md:hidden"
       >
         <div className="flex items-end gap-1 pb-1.5">
-          {link(first)}
+          {left.map(link)}
           <button
             type="button"
             onClick={() => openPalette()}
@@ -48,11 +51,11 @@ export function BottomNav({ user }: { user: { name: string; image?: string | nul
           >
             <Plus aria-hidden className="size-7" strokeWidth={3} />
           </button>
-          {rest.map(link)}
+          {right.map(link)}
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
-            className={cn(tab, more.some((i) => isActive(pathname, i.href)) && "bg-lime")}
+            className={cn(tab, more.some((i) => isActive(pathname, i.href)) && activeTab)}
           >
             <Menu aria-hidden className="size-[22px]" />
             More
