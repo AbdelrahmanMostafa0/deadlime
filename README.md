@@ -158,6 +158,7 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 18. **Mobile gestures:**
     - Swipe right on a card = done, swipe left = snooze to tomorrow (motion drag).
     - On the board, touch users drag from a handle (200ms long press) so swipes and scrolling still work. Mouse users drag the whole card.
+    - Board cards don't swipe: there a sideways swipe pages between columns, and done/snooze sit in "Move to". Mouse users pan the board by dragging empty space (column backgrounds, headers, gaps).
     - Swipe vs. drag is decided by `(pointer: fine)`, not screen width.
     - Mobile shows one board column at a time with scroll-snap and tabs.
     - Every card also has a non-drag "Move to…" control for keyboard and touch. [agent]
