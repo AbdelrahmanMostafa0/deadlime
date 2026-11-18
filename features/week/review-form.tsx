@@ -56,7 +56,7 @@ export function ReviewForm({ review, week, onClosed }: { review: WeekReviewDTO; 
           maxLength={20000}
         />
       </Field>
-      <div className="pb-safe sticky bottom-20 z-20 md:bottom-4">
+      <div className="pb-safe sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 md:bottom-4">
         <Button variant="lime" size="lg" className="w-full md:w-auto" disabled={submit.isPending} onClick={close}>
           {submit.isPending ? "Closing..." : "Close the week"}
         </Button>

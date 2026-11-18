@@ -13,7 +13,7 @@ export function InboxView() {
   const { data: projects = [] } = useProjects();
   const { data = [], isPending, isError, refetch } = useTasks({ view: "inbox" });
   // Assigned tasks leave the list at once instead of waiting for the refetch.
-  const tasks = data.filter((t) => !t.projectId);
+  const tasks = data.filter((t) => !t.projectId && t.status !== "done");
 
   return (
     <>

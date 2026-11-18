@@ -16,7 +16,7 @@ export function StatusControl({
       {PROJECT_STATUSES.map((status) => (
         <label
           key={status}
-          className="relative grid min-h-10 cursor-pointer place-items-center rounded-[10px] text-sm font-bold transition-spring has-checked:bg-lime has-focus-visible:outline-3 has-focus-visible:outline-pink"
+          className="relative grid min-h-11 cursor-pointer place-items-center rounded-[10px] text-sm font-bold transition-spring has-checked:bg-lime has-focus-visible:outline-3 has-focus-visible:outline-pink"
         >
           <input
             type="radio"

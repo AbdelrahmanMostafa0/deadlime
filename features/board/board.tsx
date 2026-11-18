@@ -90,7 +90,7 @@ export function Board() {
                   status={status}
                   count={dnd.items[status].length}
                   wip={status === "doing" ? wip : undefined}
-                  onAdd={status === "backlog" || status === "this_week" ? () => openPalette() : undefined}
+                  onAdd={status === "backlog" || status === "this_week" ? () => openPalette("", status) : undefined}
                 />
               }
             >

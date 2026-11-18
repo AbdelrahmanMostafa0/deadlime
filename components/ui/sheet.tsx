@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { releaseModalToasts } from "@/lib/toast";
 import { AppToaster } from "./toaster";
 
 type SheetProps = {
@@ -23,12 +24,17 @@ type SheetProps = {
  */
 export function Sheet({ open, onOpenChange, title, hideTitle, children, className, variant = "sheet" }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  // A text-selection drag that ends on the backdrop must not close the sheet.
+  const pressedBackdrop = useRef(false);
 
   // Sync React state with the browser's dialog (external system).
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      dialog.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
@@ -36,9 +42,16 @@ export function Sheet({ open, onOpenChange, title, hideTitle, children, classNam
     <dialog
       ref={ref}
       aria-label={title}
-      onClose={() => onOpenChange(false)}
+      onClose={() => {
+        releaseModalToasts();
+        onOpenChange(false);
+      }}
+      onPointerDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget;
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onOpenChange(false); // backdrop click
+        if (e.target === e.currentTarget && pressedBackdrop.current) onOpenChange(false); // backdrop click
+        pressedBackdrop.current = false;
       }}
       className={cn(
         "m-0 max-h-[92dvh] w-full max-w-none overflow-hidden border-ink bg-paper p-0 text-ink",

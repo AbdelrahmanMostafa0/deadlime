@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { TaskDTO } from "@/lib/api-types";
 import type { Subtask } from "@/lib/domain";
+import { newId } from "@/lib/id";
 import { useToday } from "@/lib/use-today";
 import { subtaskProgress } from "@/features/tasks/task-meta";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ export function SubtasksField({ task, onSave }: SubtasksFieldProps) {
   };
 
   const add = () => {
-    save(addSubtask(subtasks, text, crypto.randomUUID()));
+    save(addSubtask(subtasks, text, newId()));
     setText("");
   };
 

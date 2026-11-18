@@ -29,20 +29,27 @@ export const projectLinkSchema = z.object({
   label: z.string().trim().max(60).optional(),
 });
 
-export const projectCreateSchema = z.object({
+// Field shapes WITHOUT defaults: zod 4 `.partial()` keeps `.default()`s, which would
+// overwrite stored values on partial updates.
+const projectFields = {
   name: z.string().trim().min(1, "Give it a name").max(60),
   slug: slugSchema.optional(),
   color: hexColor,
-  icon: z.string().trim().min(1).max(40).default("folder"),
-  status: z.enum(PROJECT_STATUSES).default("active"),
-  links: z.array(projectLinkSchema).max(12).default([]),
-  notes: z.string().max(20_000).default(""),
+  icon: z.string().trim().min(1).max(40),
+  status: z.enum(PROJECT_STATUSES),
+  links: z.array(projectLinkSchema).max(12),
+  notes: z.string().max(20_000),
+};
+
+export const projectCreateSchema = z.object(projectFields).extend({
+  icon: projectFields.icon.default("folder"),
+  status: projectFields.status.default("active"),
+  links: projectFields.links.default([]),
+  notes: projectFields.notes.default(""),
 });
 export type ProjectCreateInput = z.input<typeof projectCreateSchema>;
 
-export const projectUpdateSchema = projectCreateSchema
-  .partial()
-  .extend({ archived: z.boolean().optional() });
+export const projectUpdateSchema = z.object(projectFields).partial().extend({ archived: z.boolean().optional() });
 export type ProjectUpdateInput = z.input<typeof projectUpdateSchema>;
 
 const richNode: z.ZodType<RichNode, RichNode> = z.lazy(() =>

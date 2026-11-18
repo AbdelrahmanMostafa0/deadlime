@@ -17,8 +17,10 @@ export function TodayView() {
   const today = useToday();
   const projects = useProjectMap();
   const doneToday = useDoneToday();
-  const { data = [], isPending, isError, refetch } = useTasks({ view: "today" });
+  const { data: raw = [], isPending, isError, refetch } = useTasks({ view: "today" });
 
+  // Optimistically completed tasks leave at once instead of waiting for the refetch.
+  const data = raw.filter((t) => t.status !== "done");
   const overdue = data.filter((t) => isOverdue(t, today));
   const dueToday = data.filter((t) => t.dueDate === today);
   const doing = data.filter((t) => !overdue.includes(t) && !dueToday.includes(t));

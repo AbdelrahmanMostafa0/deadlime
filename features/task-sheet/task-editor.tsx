@@ -13,10 +13,10 @@ import { SubtasksField } from "./subtasks-field";
 import { TitleField } from "./title-field";
 import type { SaveTask } from "./types";
 
-type TaskEditorProps = { task: TaskDTO; onClose: () => void };
+type TaskEditorProps = { task: TaskDTO; /** Task is the list-cache copy; the real fetch is still pending. */ isPlaceholder?: boolean; onClose: () => void };
 
 /** Every field of a task, each saving itself through the optimistic update hook. */
-export function TaskEditor({ task, onClose }: TaskEditorProps) {
+export function TaskEditor({ task, isPlaceholder = false, onClose }: TaskEditorProps) {
   const update = useUpdateTask();
   const remove = useDeleteTask();
 
@@ -39,7 +39,8 @@ export function TaskEditor({ task, onClose }: TaskEditorProps) {
         <DueDateField task={task} onSave={save} />
         <LabelsField task={task} onSave={save} />
         <SubtasksField task={task} onSave={save} />
-        <DescriptionField task={task} onSave={save} />
+        {/* Tiptap reads content once at mount: remount when live data replaces the placeholder. */}
+        <DescriptionField key={isPlaceholder ? "placeholder" : "live"} task={task} onSave={save} />
         <ActivityLog taskId={task.id} />
       </div>
       <SheetFooter
