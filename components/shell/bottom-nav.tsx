@@ -77,7 +77,7 @@ export function BottomNav({ user }: { user: { name: string; image?: string | nul
             </Link>
           ))}
           <div className="mt-2 border-t-2 border-line pt-3">
-            <UserMenu user={user} />
+            <UserMenu user={user} onNavigate={() => setMoreOpen(false)} />
           </div>
         </nav>
       </Sheet>

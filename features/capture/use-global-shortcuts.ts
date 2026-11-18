@@ -14,7 +14,7 @@ function isTyping(target: EventTarget | null) {
 
 /**
  * Window-level shortcuts: Cmd/Ctrl+K toggles the palette, "c" opens it,
- * "g" then t/w/i/b/p/r navigates. Single keys are ignored while typing or
+ * "g" then t/w/i/b/p/r/s navigates. Single keys are ignored while typing or
  * while any dialog is open.
  */
 export function useGlobalShortcuts() {

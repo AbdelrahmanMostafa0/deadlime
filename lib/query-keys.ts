@@ -3,6 +3,7 @@ import type { TaskListQuery } from "./validation";
 /** Single source of TanStack Query keys. Invalidate by prefix (e.g. qk.tasks.all). */
 export const qk = {
   me: ["me"] as const,
+  connections: ["connections"] as const,
   projects: {
     all: ["projects"] as const,
     list: (archived = false) => ["projects", "list", { archived }] as const,
