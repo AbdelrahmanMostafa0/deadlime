@@ -2,7 +2,7 @@
 
 import { CalendarClock, Check, Moon } from "lucide-react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { addDaysISO } from "@/lib/dates";
 import type { ProjectDTO, TaskDTO } from "@/lib/api-types";
 import { cn } from "@/lib/cn";
@@ -18,13 +18,15 @@ type TaskCardProps = {
   project?: ProjectDTO;
   /** Enable swipe right = done, swipe left = snooze to tomorrow (mobile). */
   swipeable?: boolean;
+  /** Extra controls rendered at the end of the card (e.g. the board's drag handle). */
+  actions?: ReactNode;
   className?: string;
 } & Pick<ComponentProps<"article">, "style">;
 
 const SWIPE_AT = 96;
 
 /** The task card used by every list and the board. Tap opens the editor. */
-export function TaskCard({ task, project, swipeable = true, className, style }: TaskCardProps) {
+export function TaskCard({ task, project, swipeable = true, actions, className, style }: TaskCardProps) {
   const today = useToday();
   const update = useUpdateTask();
   const openTask = useUiStore((s) => s.openTask);
@@ -115,6 +117,7 @@ export function TaskCard({ task, project, swipeable = true, className, style }: 
             ))}
           </span>
         </button>
+        {actions}
       </motion.article>
     </div>
   );
