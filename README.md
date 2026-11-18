@@ -52,20 +52,23 @@ npm run dev
 
 ```
 app/
-  (app)/            authenticated screens: today, week, inbox, board, projects, review
+  (app)/            authenticated screens: today, week, inbox, board, projects, review, settings
   api/              REST route handlers (thin: parse → service → JSON)
   sign-in/          OAuth sign-in
+  oauth/consent/    MCP consent screen ("Allow Claude?")
 components/
   ui/               design-system primitives (Button, Card, tags, Sheet, CheckButton, Field…)
   shell/            app shell: sidebar (desktop), bottom nav (mobile), global overlays
 features/           one folder per feature: UI + hooks + pure helpers, colocated
-  board/ capture/ projects/ task-sheet/ tasks/ views/ week/ auth/
+  board/ capture/ projects/ task-sheet/ tasks/ views/ week/ auth/ oauth/ settings/
 server/
   api.ts            route() wrapper: auth, same-origin check, timezone, error mapping
   services/         ALL business logic + DB access, shared by REST and MCP
+  mcp/              MCP server: OAuth-protected handler, tools, project resolver
 db/                 Drizzle schema (auth + app) and migrations
 lib/                shared, framework-free code: domain vocabulary, automations, validation, dates, parser
 stores/ui.ts        Zustand: UI-only state (palette open, task being edited)
+public/brand/       mascot and lockup PNGs (sized for the web)
 ```
 
 ---
@@ -256,6 +259,12 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 50. **A Settings page (`/settings`, `g s`) carries the profile, the Claude connect guide and the connected apps.** Before it, the only instructions lived in this README. The MCP URL shown there comes from `BETTER_AUTH_URL`, so it is the exact `resource` the tokens are issued for. On localhost the page says the Claude app can't reach it and points to Claude Code.
 51. **Disconnecting an app deletes the user's consent, access and refresh tokens for that client, straight in the DB.** The provider's revoke endpoint needs the client's own credentials, which the user doesn't have. Refresh stops at once, but an access token already issued is a JWT that `/api/mcp` verifies without a DB lookup, so it keeps working until it expires (1 hour). The toast says so.
 
+### Mobile fixes
+
+52. **`route()` calls `connection()` before anything else, outside its try/catch.** With Cache Components, a GET handler that reads no request input (`/api/connections`) was prerendered at build time and failed on `headers()`. Inside the try, the prerender bail-out was caught and turned into a 500. Every API response is per user, so none of them should prerender.
+53. **The mobile tab bar is 2 + 2 around the capture button, every tab the same width (`flex-1 basis-0`).** It was 1 + 3, which pushed the + off center. The active tab gets the ink outline and small shadow like every other selected control.
+54. **The settings page uses the full width.** Phones get one column (profile, connect guide, connected apps). From `xl`, the guide takes the main column and account things sit in a 380px side column, placed with grid positions so the phone order doesn't change.
+
 ---
 
 ## Connect Claude (MCP)
@@ -273,7 +282,8 @@ Tools:
 - **Week:** `get_week_plan`, `set_week_plan`, `get_week_review`, `submit_week_review`.
 
 **Not verified yet:**
-- The live OAuth round trip, refresh/revocation, and running the migration against a real database all need your credentials, so they haven't been exercised.
+- Done: migrations applied to Neon, and Google and GitHub sign-in work on localhost.
+- Still to check: the MCP connector's OAuth round trip (Claude Code locally, then the Claude app once deployed), token refresh, and Disconnect.
 - JWT revocation follows the provider's token policy. Don't assume tokens are invalidated instantly.
 - Expired client-assertion tombstones need periodic cleanup.
 
@@ -287,4 +297,6 @@ Tools:
 - **Optimistic create in the palette:** it currently waits for the server, about 1 round trip.
 - **Popover "Move to…" menu:** the native `<select>` fires on arrow keys in some desktop browsers.
 - **Board drag correction:** dnd-kit's "below the hovered card" correction for smoother cross-column drags.
+- **Popup sign-in on desktop:** open Google/GitHub in a popup and `postMessage` back. Same callback URLs. Keep the redirect on mobile and for the MCP sign-in.
+- **Check the board on a real phone:** the swipe and drag-to-pan changes were tested by code, not visually.
 - **Lighthouse mobile pass:** run it against the deployed build. The spec's target is 90+.
