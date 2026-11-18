@@ -1,4 +1,4 @@
-import { useQuery, type QueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type { ActivityDTO, TaskDTO } from "@/lib/api-types";
 import { qk } from "@/lib/query-keys";
@@ -14,11 +14,23 @@ export function useTasks(query: Partial<TaskListQuery> = {}) {
 }
 
 export function useTask(id: string | null) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: qk.tasks.detail(id ?? ""),
     queryFn: async () => (await api.get<TaskDTO>(`/tasks/${id}`)).data,
     enabled: !!id,
+    // Open instantly with the copy already in a list; the fetch refreshes it.
+    placeholderData: () => findInLists(qc, id),
   });
+}
+
+function findInLists(qc: QueryClient, id: string | null) {
+  if (!id) return undefined;
+  for (const [, list] of qc.getQueriesData<TaskDTO[]>({ queryKey: ["tasks", "list"] })) {
+    const hit = list?.find((t) => t.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 export function useTaskActivity(id: string) {

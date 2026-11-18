@@ -2,7 +2,6 @@
 
 import { useUiStore } from "@/stores/ui";
 import { Sheet } from "@/components/ui/sheet";
-import { AppToaster } from "@/components/ui/toaster";
 import { TaskSheetBody } from "./task-sheet-body";
 
 /**
@@ -15,13 +14,7 @@ export function TaskSheet() {
 
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && closeTask()} title="Task">
-      {id && (
-        <>
-          <TaskSheetBody key={id} id={id} onClose={closeTask} />
-          {/* The modal <dialog> makes the page inert and covers the app's toaster; render one inside it. */}
-          <AppToaster />
-        </>
-      )}
+      {id && <TaskSheetBody key={id} id={id} onClose={closeTask} />}
     </Sheet>
   );
 }

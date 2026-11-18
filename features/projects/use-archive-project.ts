@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { toastUndo } from "@/components/ui/toast-undo";
 import { api, toApiError } from "@/lib/api-client";
 import type { ProjectDTO } from "@/lib/api-types";

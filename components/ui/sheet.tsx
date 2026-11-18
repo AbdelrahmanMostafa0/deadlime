@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { AppToaster } from "./toaster";
 
 type SheetProps = {
   open: boolean;
@@ -63,6 +64,8 @@ export function Sheet({ open, onOpenChange, title, hideTitle, children, classNam
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>
+      {/* The open dialog makes the page inert; lib/toast.ts routes toasts here meanwhile. */}
+      {open && <AppToaster modal />}
     </dialog>
   );
 }

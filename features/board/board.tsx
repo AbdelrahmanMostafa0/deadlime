@@ -19,7 +19,7 @@ import { useBoardDnd, type Drop } from "./use-board-dnd";
 import { useFinePointer } from "./use-fine-pointer";
 import { useReorderTask } from "./use-reorder-task";
 import { useSnapColumns } from "./use-snap-columns";
-import { useWeekPlan } from "./use-week-plan";
+import { useWeekPlan } from "@/features/week/api";
 
 /** Kanban board. `?project=<id>` narrows it to one project. */
 export function Board() {

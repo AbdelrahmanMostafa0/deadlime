@@ -8,7 +8,7 @@ import { copy } from "@/lib/copy";
 import { useToday } from "@/lib/use-today";
 import { PageHeader } from "@/components/shell/app-shell";
 import { TaskSection } from "./task-section";
-import { useWipLimit } from "./use-week-plan";
+import { useWipLimit } from "@/features/week/api";
 import { ViewState } from "./view-state";
 
 export function WeekView() {

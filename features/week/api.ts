@@ -1,18 +1,26 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { api, toApiError } from "@/lib/api-client";
 import type { WeekPlanDTO, WeekReviewDTO } from "@/lib/api-types";
 import type { ReviewSnapshot } from "@/lib/domain";
+import { DEFAULT_WIP_LIMIT } from "@/lib/domain";
 import { qk } from "@/lib/query-keys";
 import type { WeekPlanUpdateInput, WeekReviewInput } from "@/lib/validation";
 
-export function useWeekPlan(week: string) {
+/** Plan for the week containing `week` (any ISO date), or the current week. */
+export function useWeekPlan(week?: string) {
   return useQuery({
     queryKey: qk.week.plan(week),
-    queryFn: async () => (await api.get<WeekPlanDTO>("/week-plan", { params: { week } })).data,
+    queryFn: async () =>
+      (await api.get<WeekPlanDTO>("/week-plan", { params: week ? { week } : {} })).data,
   });
+}
+
+/** Current week's Doing limit; the default while loading. */
+export function useWipLimit() {
+  return useWeekPlan().data?.wipLimit ?? DEFAULT_WIP_LIMIT;
 }
 
 export function useWeekReview(week: string) {

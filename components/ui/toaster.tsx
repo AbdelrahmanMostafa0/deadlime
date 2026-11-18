@@ -1,15 +1,17 @@
 "use client";
 
 import { Toaster } from "sonner";
+import { MODAL_TOASTER_ID } from "@/lib/toast";
 
 /**
- * The app's toast stack. Mounted once in Providers and again inside modal
- * sheets: a modal <dialog> sits in the top layer and makes the page inert,
- * so Undo buttons from the page-level toaster can't be seen or clicked.
+ * The app's toast stack. Mounted once in Providers (page) and once inside
+ * modal sheets with `modal`: a modal <dialog> makes the page inert, so
+ * lib/toast.ts routes toasts to the in-dialog toaster while one is open.
  */
-export function AppToaster() {
+export function AppToaster({ modal = false }: { modal?: boolean }) {
   return (
     <Toaster
+      id={modal ? MODAL_TOASTER_ID : undefined}
       position="bottom-center"
       offset={{ bottom: 96 }}
       mobileOffset={{ bottom: 96 }}
