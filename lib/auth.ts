@@ -1,4 +1,6 @@
 import "server-only";
+import { mcp } from "@better-auth/mcp";
+import { jwt } from "better-auth/plugins";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -20,7 +22,19 @@ function createAuth() {
     },
     account: { accountLinking: { enabled: true, trustedProviders: ["google", "github"] } },
     session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
-    plugins: [nextCookies()],
+    plugins: [
+      jwt(),
+      mcp({
+        loginPage: "/sign-in",
+        consentPage: "/oauth/consent",
+        resource: `${env.BETTER_AUTH_URL}/api/mcp`,
+        scopes: ["openid", "profile", "email", "offline_access", "deadlime"],
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        grantTypes: ["authorization_code", "refresh_token"],
+      }),
+      nextCookies(),
+    ],
   });
 }
 
