@@ -16,7 +16,7 @@ import { ColumnTabs } from "./column-tabs";
 import { ProjectFilter } from "./project-filter";
 import { SortableTask } from "./sortable-task";
 import { useBoardDnd, type Drop } from "./use-board-dnd";
-import { useFinePointer } from "./use-fine-pointer";
+import { useDragScroll } from "./use-drag-scroll";
 import { useReorderTask } from "./use-reorder-task";
 import { useSnapColumns } from "./use-snap-columns";
 import { useWeekPlan } from "@/features/week/api";
@@ -30,8 +30,8 @@ export function Board() {
   const projectMap = useProjectMap();
   const wipLimit = useWeekPlan().data?.wipLimit ?? DEFAULT_WIP_LIMIT;
   const reorder = useReorderTask();
-  const finePointer = useFinePointer();
   const { scrollerRef, activeColumn, goTo } = useSnapColumns();
+  useDragScroll(scrollerRef);
   const openPalette = useUiStore((s) => s.openPalette);
 
   const tasks = tasksQuery.data ?? [];
@@ -77,7 +77,7 @@ export function Board() {
       >
         <div
           ref={scrollerRef}
-          className="-mx-4 flex snap-x snap-mandatory items-start gap-4 scroll-px-4 overflow-x-auto px-4 pt-1 pb-4 md:mx-0 md:snap-none md:scroll-px-0 md:ps-0.5 md:pe-2"
+          className="-mx-4 flex snap-x snap-mandatory overscroll-x-contain items-start gap-4 scroll-px-4 overflow-x-auto px-4 pt-1 pb-4 md:mx-0 md:snap-none md:scroll-px-0 md:ps-0.5 md:pe-2"
         >
           {TASK_STATUSES.map((status) => (
             <BoardColumn
@@ -102,7 +102,6 @@ export function Board() {
                     key={id}
                     task={task}
                     project={task.projectId ? projectMap.get(task.projectId) : undefined}
-                    swipeable={!finePointer}
                     onMove={(to) => moveTo(id, task.status, to)}
                   />
                 );

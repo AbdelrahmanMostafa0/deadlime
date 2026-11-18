@@ -13,8 +13,6 @@ import { MoveToSelect } from "./move-to-select";
 type SortableTaskProps = {
   task: TaskDTO;
   project?: ProjectDTO;
-  /** Card swipe gestures (touch). Off for mouse users, where a drag means move. */
-  swipeable: boolean;
   onMove: (to: TaskStatus) => void;
 };
 
@@ -27,7 +25,7 @@ function splitListeners(listeners: DraggableSyntheticListeners) {
 }
 
 /** A board card: sortable wrapper around the shared TaskCard, with a drag handle and "Move to". */
-export function SortableTask({ task, project, swipeable, onMove }: SortableTaskProps) {
+export function SortableTask({ task, project, onMove }: SortableTaskProps) {
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -43,7 +41,8 @@ export function SortableTask({ task, project, swipeable, onMove }: SortableTaskP
       <TaskCard
         task={task}
         project={project}
-        swipeable={swipeable && !isDragging}
+        // No done/snooze swipe on the board: a sideways swipe pages between columns.
+        swipeable={false}
         actions={
           <div className="flex shrink-0 flex-col gap-1.5">
             <DragHandle
