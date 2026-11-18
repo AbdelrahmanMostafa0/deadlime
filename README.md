@@ -96,11 +96,9 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 
 ### Product scope
 
-1. **Open sign-up instead of a single allowed email.** *Owner request.*
-   - Any Google or GitHub account can sign in and gets its own empty workspace. `ALLOWED_EMAIL` was removed.
-   - Consequences:
-     - Every domain table (`project`, `task`, `week_plan`, `activity_log`) has a `user_id` foreign key, and every query is scoped by it in the service layer.
-     - Payload sizes and per-user counts are capped (100 projects, 5,000 tasks, bounded strings and arrays in `lib/validation.ts`), because strangers can now write to the database.
+1. **Every account gets its own workspace.**
+   - Every domain table (`project`, `task`, `week_plan`, `activity_log`) has a `user_id` foreign key, and every query is scoped by it in the service layer.
+   - Payload sizes and per-user counts are capped (100 projects, 5,000 tasks, bounded strings and arrays in `lib/validation.ts`), because anyone who signs in can write to the database.
    - **Rejected: Postgres row-level security.** It's a stronger guarantee, but with neon-http and Better Auth it means setting a per-request role/GUC on every query. One service layer that always receives an authenticated `Actor` is simpler and easy to audit. [Claude; Codex agreed and suggested isolation tests as the follow-up.]
 2. **V1 only.** The content pipeline, GitHub integration, recurring tasks, calendar and dashboard are V2, so their services (Resend, R2, Cron, GitHub App) aren't wired up yet.
 
