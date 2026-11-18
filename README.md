@@ -1,6 +1,6 @@
 # Deadlime
 
-<img src="public/brand/lockup.png" alt="Deadlime" width="360">
+<img src="public/brand/lockup.webp" alt="Deadlime" width="360">
 
 A mobile-first project and task manager with attitude. One place for every project, its tasks and the weekly focus, with sarcastic micro-copy, springy motion, and an MCP server so Claude can update the board for you.
 
@@ -68,7 +68,7 @@ server/
 db/                 Drizzle schema (auth + app) and migrations
 lib/                shared, framework-free code: domain vocabulary, automations, validation, dates, parser
 stores/ui.ts        Zustand: UI-only state (palette open, task being edited)
-public/brand/       mascot and lockup PNGs (sized for the web)
+public/brand/       mascot and lockup (WebP), install icons (PNG)
 ```
 
 ---
@@ -252,7 +252,7 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 
 ### Brand
 
-49. **Two marks: the deadpan lime mascot for brand moments, the flat slice for small sizes.** The mascot (sign-in, 404, apple-touch and install icons, Open Graph image) carries the personality but its face blurs below ~48px. The slice (`LogoMark`, `app/icon.svg` favicon, sidebar, loading spinner) stays crisp at 16px and follows the color tokens. Mascot PNGs are cut down from the generated 1254px originals: 512px transparent for in-app use, padded on paper for iOS, which has no transparency.
+49. **Two marks: the deadpan lime mascot for brand moments, the flat slice for small sizes.** The mascot (sign-in, 404, apple-touch and install icons, Open Graph image) carries the personality but its face blurs below ~48px. The slice (`LogoMark`, `app/icon.svg` favicon, sidebar, loading spinner) stays crisp at 16px and follows the color tokens. The mascot is cut down from the generated 1254px original: 512px transparent WebP for in-app use, padded on paper as PNG for iOS and install icons (iOS has no transparency, and icon files stay PNG for compatibility). The originals are not kept in the repo.
 
 ### Settings
 
