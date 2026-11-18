@@ -188,14 +188,72 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 
 28. **Sentry is opt-in.** `instrumentation.ts` and `instrumentation-client.ts` initialise only when `NEXT_PUBLIC_SENTRY_DSN` is set, and source maps upload only when `SENTRY_AUTH_TOKEN` exists. Route and global error boundaries report to it.
 29. **Tests cover the logic that can silently break:** the automation rules, the capture parser, the date and week helpers, the board ordering, and the task-sheet helpers. UI is checked by typecheck and lint. End-to-end tests are a follow-up.
-30. **Parallel development:** the foundation (schema, services, automations, design system, shell) was built first so each feature branch shared the same contracts. Five features were then built in parallel git worktrees by sub-agents and merged; the only conflict was the one-line overlay mount.
+30. **Parallel development:** the foundation (schema, services, automations, design system, shell) was built first so every branch shared the same contracts. Five features were then built in parallel git worktrees by sub-agents (Opus for board and task editor, Sonnet for the rest), the MCP server by Codex, then a review agent audited the merged code and a fix agent applied its findings. The only merge conflict was the one-line overlay mount.
+
+### MCP server (implemented by Codex, reviewed by Claude)
+
+31. **One authorization server: Better Auth's `jwt()` + `mcp()` plugins (`@better-auth/mcp`), added to the existing auth instance.**
+    - Better Auth 1.7 moved MCP out of core into this package. The owner approved installing it.
+    - **Rejected: a separate OAuth server,** or hand-written token verification.
+    - **Rejected: personal API tokens.** Some Claude clients only support OAuth for custom connectors.
+32. **Dynamic client registration is on.** Claude registers its own client, so you never paste client secrets.
+    - **Rejected: CIMD,** which needs another package.
+    - Only the authorization-code and refresh-token grants are enabled, with PKCE and a consent screen.
+    - DCR client names are self-reported, and the consent page says so.
+33. **A dedicated `deadlime` scope is required by every tool.** A plain login token or profile-only token can't call the MCP resource.
+    - `requireMcpAuth` verifies issuer, audience (`<APP_URL>/api/mcp`), signature and expiry.
+    - The verified `sub` becomes the user id. Each request builds its tools around that user, with no shared state between requests.
+34. **The transport is stateless Streamable HTTP via `mcp-handler`,** POST only at `/api/mcp`. There is no Redis, no SSE and no subscriptions.
+    - **Rejected: `legacy: "reject"`.** It would lock out 2025-protocol Claude clients.
+35. **OAuth discovery routes live at the origin root and at the RFC issuer paths** (`/.well-known/oauth-authorization-server[/api/auth]`, `/.well-known/oauth-protected-resource[/api/mcp]`), with CORS.
+    - The issuer comes from configuration, never from forwarded request headers.
+36. **Login continues through the provider.** The oauth-provider client plugin carries the signed authorize request through Google or GitHub sign-in and resumes it after the callback.
+    - **Rejected: rebuilding an unsigned authorize URL by hand.**
+    - The proxy now keeps the query string, so a consent request survives an expired session.
+37. **Tools reuse the service layer with `source: "mcp"`.** Automations, the WIP limit, validation and activity logging behave exactly as on the web. `complete_task` sends `completed` (not a raw status) and reports which rules fired.
+38. **Project names are never guessed.** Projects resolve by exact id, or by case-insensitive slug or name within the user's own projects; a collision is an error.
+    - Task search stays fuzzy and returns scores. The tool description tells Claude to ask you when matches are close.
+39. **Results are bounded** (list 50 by default, max 100), and owner and auth fields are left out. Domain errors come back as MCP `isError` content; a WIP error explains that `force: true` needs the user's agreement.
+
+### Fixes from the review pass
+
+40. **Watch out for Zod 4: `.partial()` keeps `.default()`s.**
+    - **The bug:** `{ archived: true }` parsed with the project update schema came back carrying `icon:"folder", status:"active", links:[], notes:""`, so archiving wiped the project.
+    - **The fix:** update schemas are now built from default-free field shapes.
+    - `lib/validation.test.ts` locks this in for project, task and week-plan updates. Codex hit the same trap in the MCP create tool and fixed it there too. [review agent]
+41. **Toasts survive a sheet closing.** Toasts sent into a dialog's toaster are tracked (`lib/toast-registry.ts`). On close they are re-shown on the page toaster with the time they had left, except ones already clicked or dismissed. [review agent]
+42. **Fixed-bottom elements add the safe-area inset to their offset:** the review button, the projects button and mobile toasts. On notched phones they no longer hide behind the bottom nav. [review agent]
+43. **Smaller fixes:**
+    - The palette input gets focus after `showModal()` via `[data-autofocus]`.
+    - A text selection that ends on the backdrop no longer closes a sheet.
+    - The board's "+" carries the column's status into the palette.
+    - The description editor remounts when live data replaces the cached copy.
+    - Client ids fall back when `crypto.randomUUID` is unavailable (phones testing over http on a LAN). [review agent]
+
+---
+
+## Connect Claude (MCP)
+
+1. Apply the migrations (`npm run db:migrate`), including `0001_oauth_mcp.sql`, and deploy. `BETTER_AUTH_URL` must be the public origin with no trailing slash.
+2. In Claude: **Settings → Connectors → Add custom connector**, name it **Deadlime**, and enter URL **`<BETTER_AUTH_URL>/api/mcp`**. Leave the client credentials blank.
+3. Connect, sign in with Google or GitHub, and choose **Allow**.
+4. Try "What's due today?" or "I finished the login bug and the expiry alerts." Changes show in each task's activity log as "via Claude".
+
+Tools: `list_projects`, `list_tasks`, `search_tasks`, `create_task`, `update_task`, `complete_task`, `get_week_plan`, `set_week_plan`.
+
+**Not verified yet:**
+- The live OAuth round trip, refresh/revocation, and running the migration against a real database all need your credentials, so they haven't been exercised.
+- JWT revocation follows the provider's token policy. Don't assume tokens are invalidated instantly.
+- Expired client-assertion tombstones need periodic cleanup.
 
 ---
 
 ## Known follow-ups
 
-- **End-to-end tests:** Playwright for capture → board → done, and user-isolation tests across REST and MCP.
-- **`placeholderData` for task detail:** done. Next is optimistic create in the palette (it currently waits for the server, about 1 round trip).
+- **End-to-end tests:** Playwright for capture → board → done, user-isolation tests across REST and MCP, and a live OAuth test of the MCP connector.
+- **Abuse controls for open sign-up:** rate limits on the API and on dynamic client registration.
+- **Keep typed text on capture failure:** the palette closes before the create request resolves.
+- **Optimistic create in the palette:** it currently waits for the server, about 1 round trip.
 - **Popover "Move to…" menu:** the native `<select>` fires on arrow keys in some desktop browsers.
 - **Board drag correction:** dnd-kit's "below the hovered card" correction for smoother cross-column drags.
 - **Lighthouse mobile pass:** run it against the deployed build. The spec's target is 90+.
