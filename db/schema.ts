@@ -26,6 +26,7 @@ import {
 import { user } from "./auth-schema";
 
 export * from "./auth-schema";
+export * from "./oauth-schema";
 
 export const taskStatus = pgEnum("task_status", TASK_STATUSES);
 export const priority = pgEnum("priority", PRIORITIES);

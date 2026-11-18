@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { safeNext } from "@/lib/auth-redirect";
 
 type Provider = "google" | "github";
 
@@ -13,17 +14,14 @@ const PROVIDERS: { id: Provider; label: string }[] = [
   { id: "github", label: "Continue with GitHub" },
 ];
 
-/** Only allow same-site relative paths as the post-login destination. */
-function safeNext(next: string | null) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/today";
-}
-
 export function SignInButtons() {
   const params = useSearchParams();
   const [pending, setPending] = useState<Provider | null>(null);
 
   const signIn = async (provider: Provider) => {
     setPending(provider);
+    // oauthProviderClient attaches the signed query on this page. The provider
+    // carries it through social OAuth state and resumes authorization on callback.
     const { error } = await authClient.signIn.social({ provider, callbackURL: safeNext(params.get("next")) });
     if (error) {
       setPending(null);
