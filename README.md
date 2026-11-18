@@ -230,6 +230,20 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
     - The description editor remounts when live data replaces the cached copy.
     - Client ids fall back when `crypto.randomUUID` is unavailable (phones testing over http on a LAN). [review agent]
 
+### More MCP tools (Claude)
+
+44. **The MCP surface goes beyond the spec's 8 tools: projects, bulk create, delete/restore and the weekly review.** The spec's list had no way to create a project, so a whole setup ("make Taanaq, add these 12 tasks") couldn't be done from Claude.
+    - Every new tool reuses the same service function as the web UI, so caps, slug uniqueness, automations and the activity log behave the same.
+    - **Rejected: a generic "raw update" tool.** Narrow tools with clear descriptions are easier for Claude to call correctly.
+45. **`create_tasks` is not atomic, but every project reference is checked before anything is written.** A typo in one project name creates nothing.
+    - Tasks are then created one by one through `createTask`, so each one gets its rules, the WIP check and the top-of-column order.
+    - A per-task failure (for example Doing is full) is reported in that task's result while the others still go in.
+    - Capped at 50 per call.
+    - **Rejected: one `db.batch` insert.** It would have to duplicate the automations, WIP and ordering logic that `createTask` owns.
+46. **`delete_task` stays soft and points at `restore_task`.** Deleting from chat is as undoable as the web's Undo toast. The tool is marked destructive and tells Claude to confirm when the task came from a fuzzy search.
+47. **`update_project` resolves the project by exact slug, name or id, same as tasks.** Project results now include color, icon and links, so Claude can add a link without wiping the existing ones (`links` replaces the list).
+48. **The weekly review is split into `get_week_review` (read) and `submit_week_review` (write).** Claude has to show you the open tasks and let you choose what to carry or drop before it closes the week.
+
 ---
 
 ## Connect Claude (MCP)
@@ -239,7 +253,10 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 3. Connect, sign in with Google or GitHub, and choose **Allow**.
 4. Try "What's due today?" or "I finished the login bug and the expiry alerts." Changes show in each task's activity log as "via Claude".
 
-Tools: `list_projects`, `list_tasks`, `search_tasks`, `create_task`, `update_task`, `complete_task`, `get_week_plan`, `set_week_plan`.
+Tools:
+- **Projects:** `list_projects`, `create_project`, `update_project` (edit, archive, unarchive).
+- **Tasks:** `list_tasks`, `search_tasks`, `create_task`, `create_tasks` (up to 50), `update_task`, `complete_task`, `delete_task`, `restore_task`.
+- **Week:** `get_week_plan`, `set_week_plan`, `get_week_review`, `submit_week_review`.
 
 **Not verified yet:**
 - The live OAuth round trip, refresh/revocation, and running the migration against a real database all need your credentials, so they haven't been exercised.
