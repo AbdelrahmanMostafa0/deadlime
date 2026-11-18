@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/shell/app-shell";
+import { WeekView } from "@/features/views/week-view";
 
 export const metadata: Metadata = { title: "This Week" };
 
 export default function Page() {
-  return <PageHeader title="This Week" subtitle="Coming right up." />;
+  return <WeekView />;
 }
