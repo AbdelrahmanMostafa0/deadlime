@@ -1,5 +1,7 @@
 # Deadlime
 
+<img src="public/brand/lockup.png" alt="Deadlime" width="360">
+
 A mobile-first project and task manager with attitude. One place for every project, its tasks and the weekly focus, with sarcastic micro-copy, springy motion, and an MCP server so Claude can update the board for you.
 
 Stack: Next.js 16 (App Router, Cache Components) · React 19 · TypeScript · Tailwind v4 · TanStack Query · Zustand · dnd-kit · cmdk · Tiptap · Motion · Drizzle + Neon Postgres · Better Auth (Google, GitHub) · Sentry · mcp-handler.
@@ -243,6 +245,10 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 46. **`delete_task` stays soft and points at `restore_task`.** Deleting from chat is as undoable as the web's Undo toast. The tool is marked destructive and tells Claude to confirm when the task came from a fuzzy search.
 47. **`update_project` resolves the project by exact slug, name or id, same as tasks.** Project results now include color, icon and links, so Claude can add a link without wiping the existing ones (`links` replaces the list).
 48. **The weekly review is split into `get_week_review` (read) and `submit_week_review` (write).** Claude has to show you the open tasks and let you choose what to carry or drop before it closes the week.
+
+### Brand
+
+49. **Two marks: the deadpan lime mascot for brand moments, the flat slice for small sizes.** The mascot (sign-in, 404, apple-touch and install icons, Open Graph image) carries the personality but its face blurs below ~48px. The slice (`LogoMark`, `app/icon.svg` favicon, sidebar, loading spinner) stays crisp at 16px and follows the color tokens. Mascot PNGs are cut down from the generated 1254px originals: 512px transparent for in-app use, padded on paper for iOS, which has no transparency.
 
 ---
 

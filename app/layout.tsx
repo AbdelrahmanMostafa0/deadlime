@@ -10,6 +10,8 @@ const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["lati
 export const metadata: Metadata = {
   title: { default: "Deadlime", template: "%s · Deadlime" },
   description: "A project and task manager with attitude.",
+  // Absolute URLs for the Open Graph image. Unset on Vercel falls back to VERCEL_URL.
+  metadataBase: process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : undefined,
 };
 
 export const viewport: Viewport = {
