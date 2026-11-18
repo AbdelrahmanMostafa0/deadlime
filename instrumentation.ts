@@ -8,7 +8,6 @@ export async function register() {
   Sentry.init({
     dsn,
     tracesSampleRate: 0.1,
-    sendDefaultPii: false,
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   });
 }
