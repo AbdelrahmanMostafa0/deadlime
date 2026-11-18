@@ -25,9 +25,10 @@ const MUTATING = new Set(["POST", "PATCH", "PUT", "DELETE"]);
  */
 export function route<P = Record<string, never>>(handler: Handler<P>) {
   return async (req: Request, ctx: { params: Promise<P> }) => {
+    // Every API response is per user: never prerender, even a GET that reads no request input.
+    // Outside the try, so the prerender bail-out isn't caught and turned into a 500.
+    await connection();
     try {
-      // Every API response is per user: never prerender, even a GET that reads no request input.
-      await connection();
       if (MUTATING.has(req.method)) assertSameOrigin(req);
       const user = await getSessionUser();
       if (!user) throw new AppError("unauthorized", "Sign in first.");
