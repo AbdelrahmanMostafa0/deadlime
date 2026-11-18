@@ -2,8 +2,20 @@ import type { WeekPlanView } from "@/server/services/week-plans";
 import type { Project, Task } from "@/db/schema";
 import { docToText } from "@/lib/rich-text";
 
-export function formatProject(p: Pick<Project, "id" | "name" | "slug" | "status" | "archivedAt">) {
-  return { id: p.id, name: p.name, slug: p.slug, status: p.status, archived: p.archivedAt !== null };
+type ProjectSummary = Pick<Project, "id" | "name" | "slug" | "status" | "archivedAt"> &
+  Partial<Pick<Project, "color" | "icon" | "links">>;
+
+export function formatProject(p: ProjectSummary) {
+  return {
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    status: p.status,
+    archived: p.archivedAt !== null,
+    ...(p.color !== undefined ? { color: p.color } : {}),
+    ...(p.icon !== undefined ? { icon: p.icon } : {}),
+    ...(p.links !== undefined ? { links: p.links } : {}),
+  };
 }
 
 type TaskSummary = Pick<Task, "id" | "title" | "status" | "projectId" | "dueDate"> &
