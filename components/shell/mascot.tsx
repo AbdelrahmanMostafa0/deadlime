@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import mascot from "@/public/brand/mascot.png";
+import mascot from "@/public/brand/mascot.webp";
 
 type MascotProps = { className?: string; priority?: boolean };
 
