@@ -1,6 +1,9 @@
-import { PageHeader } from "@/components/shell/app-shell";
+import type { Metadata } from "next";
+import { ProjectDetail } from "@/features/projects/project-detail";
+
+export const metadata: Metadata = { title: "Project" };
 
 export default async function Page({ params }: PageProps<"/projects/[id]">) {
   const { id } = await params;
-  return <PageHeader title="Project" subtitle={id} />;
+  return <ProjectDetail id={id} />;
 }
