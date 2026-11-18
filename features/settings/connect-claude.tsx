@@ -22,7 +22,7 @@ const Step = ({ n, children }: { n: number; children: ReactNode }) => (
 export function ConnectClaude({ mcpUrl }: ConnectClaudeProps) {
   const local = isLocal(mcpUrl);
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
       <Card className="flex flex-col gap-4 p-5">
         <div>
           <h3 className="font-display-tight text-lg font-extrabold">Claude app</h3>
@@ -76,7 +76,7 @@ export function ConnectClaude({ mcpUrl }: ConnectClaudeProps) {
         </ol>
       </Card>
 
-      <Card tone="paper" className="p-5 lg:col-span-2">
+      <Card tone="paper" className="p-5 lg:col-span-2 xl:col-span-1 2xl:col-span-2">
         <h3 className="font-display-tight text-lg font-extrabold">Then try</h3>
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-ink-2">
           <li>&ldquo;What&apos;s due today?&rdquo;</li>
