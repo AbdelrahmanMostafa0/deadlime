@@ -1,6 +1,9 @@
 # Deadlime
 
-<img src="public/brand/lockup.webp" alt="Deadlime" width="360">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/brand/lockup-dark.webp">
+  <img src="public/brand/lockup.webp" alt="Deadlime" width="360">
+</picture>
 
 A mobile-first project and task manager with attitude. One place for every project, its tasks and the weekly focus, with sarcastic micro-copy, springy motion, and an MCP server so Claude can update the board for you.
 
@@ -68,7 +71,7 @@ server/
 db/                 Drizzle schema (auth + app) and migrations
 lib/                shared, framework-free code: domain vocabulary, automations, validation, dates, parser
 stores/ui.ts        Zustand: UI-only state (palette open, task being edited)
-public/brand/       mascot and lockup (WebP), install icons (PNG)
+public/brand/       mascot and lockup (WebP, plus a light-text lockup for dark themes), install icons (PNG)
 ```
 
 ---
