@@ -56,7 +56,7 @@ export function LinksEditor({
         );
       })}
       {fields.length < MAX_LINKS && (
-        <Button size="sm" className="self-start" onClick={() => append({ kind: "repo", url: "" })}>
+        <Button size="md" className="self-start" onClick={() => append({ kind: "repo", url: "" })}>
           <Plus aria-hidden className="size-4" /> Add link
         </Button>
       )}

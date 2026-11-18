@@ -33,8 +33,7 @@ export function FocusPanel({ week }: { week: string }) {
 
   const active = new Set(plan.data.activeProjectIds);
   const save = (patch: Parameters<typeof setPlan.mutate>[0], message: string) => {
-    setPlan.mutate(patch);
-    toast(message);
+    setPlan.mutate(patch, { onSuccess: () => toast(message) });
   };
   const toggle = (id: string) => {
     const next = active.has(id) ? plan.data.activeProjectIds.filter((p) => p !== id) : [...plan.data.activeProjectIds, id];

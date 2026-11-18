@@ -13,8 +13,8 @@ export function AppToaster({ modal = false }: { modal?: boolean }) {
     <Toaster
       id={modal ? MODAL_TOASTER_ID : undefined}
       position="bottom-center"
-      offset={{ bottom: 96 }}
-      mobileOffset={{ bottom: 96 }}
+      offset={{ bottom: 24 }}
+      mobileOffset={{ bottom: "calc(96px + env(safe-area-inset-bottom))" }}
       toastOptions={{
         unstyled: true,
         classNames: {

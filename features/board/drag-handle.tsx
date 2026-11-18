@@ -2,6 +2,7 @@
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
+import { useCallback } from "react";
 import { cn } from "@/lib/cn";
 
 type DragHandleProps = {
@@ -22,15 +23,20 @@ export const boardControl =
 
 /** Grip button: long-press to drag on touch, space/enter to drag with the keyboard. */
 export function DragHandle({ label, attributes, listeners, activatorRef }: DragHandleProps) {
-  const ref = (node: HTMLButtonElement | null) => {
-    activatorRef(node);
-    if (!node) return;
-    node.addEventListener("pointerdown", stopTouchSwipe);
-    return () => {
-      node.removeEventListener("pointerdown", stopTouchSwipe);
-      activatorRef(null);
-    };
-  };
+  // Stable identity: React 19 re-runs a changed ref callback's cleanup/attach every render,
+  // which would make dnd-kit's activator node flicker.
+  const ref = useCallback(
+    (node: HTMLButtonElement | null) => {
+      activatorRef(node);
+      if (!node) return;
+      node.addEventListener("pointerdown", stopTouchSwipe);
+      return () => {
+        node.removeEventListener("pointerdown", stopTouchSwipe);
+        activatorRef(null);
+      };
+    },
+    [activatorRef],
+  );
 
   return (
     <button

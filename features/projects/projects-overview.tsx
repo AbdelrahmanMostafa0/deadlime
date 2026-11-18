@@ -86,7 +86,7 @@ export function ProjectsOverview() {
         variant="lime"
         size="icon"
         aria-label="New project"
-        className="fixed end-4 bottom-24 z-20 size-14 md:hidden"
+        className="fixed end-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-20 size-14 md:hidden"
         onClick={() => setCreating(true)}
       >
         <Plus aria-hidden className="size-6" />

@@ -30,7 +30,7 @@ export function WeekSwitcher({
         <p className="font-display-tight mt-1.5 truncate text-[15px] font-extrabold md:text-lg">{weekLabel(week)}</p>
       </div>
       {relation !== "this" && (
-        <Button size="sm" variant="ghost" onClick={onReset}>
+        <Button size="md" variant="ghost" onClick={onReset}>
           This week
         </Button>
       )}

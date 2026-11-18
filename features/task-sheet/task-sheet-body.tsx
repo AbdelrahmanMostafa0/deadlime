@@ -11,7 +11,7 @@ type TaskSheetBodyProps = { id: string; onClose: () => void };
 
 /** Loading, not-found and error states around the editor. */
 export function TaskSheetBody({ id, onClose }: TaskSheetBodyProps) {
-  const { data: task, isPending, isError, error, refetch } = useTask(id);
+  const { data: task, isPending, isPlaceholderData, isError, error, refetch } = useTask(id);
 
   if (isPending) return <EditorSkeleton />;
 
@@ -32,7 +32,7 @@ export function TaskSheetBody({ id, onClose }: TaskSheetBodyProps) {
     );
   }
 
-  return <TaskEditor task={task} onClose={onClose} />;
+  return <TaskEditor task={task} isPlaceholder={isPlaceholderData} onClose={onClose} />;
 }
 
 function EditorSkeleton() {

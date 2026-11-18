@@ -6,6 +6,7 @@ import { api, toApiError } from "@/lib/api-client";
 import type { WeekPlanDTO, WeekReviewDTO } from "@/lib/api-types";
 import type { ReviewSnapshot } from "@/lib/domain";
 import { DEFAULT_WIP_LIMIT } from "@/lib/domain";
+import { todayISO, weekStartISO } from "@/lib/dates";
 import { qk } from "@/lib/query-keys";
 import type { WeekPlanUpdateInput, WeekReviewInput } from "@/lib/validation";
 
@@ -45,14 +46,22 @@ export function useSetWeekPlan(week: string) {
       (await api.patch<WeekPlanDTO>("/week-plan", patch, { params: { week } })).data,
     onMutate: async (patch) => {
       await qc.cancelQueries({ queryKey: qk.week.all });
+      // Board and useWipLimit read the "current" key; patch it too when editing this week.
+      const isCurrent =
+        weekStartISO(week) === weekStartISO(todayISO(Intl.DateTimeFormat().resolvedOptions().timeZone));
       const plan = qc.getQueryData<WeekPlanDTO>(qk.week.plan(week));
       const review = qc.getQueryData<WeekReviewDTO>(qk.week.review(week));
+      const current = isCurrent ? qc.getQueryData<WeekPlanDTO>(qk.week.plan()) : undefined;
       patchPlanCaches(qc, week, patch);
-      return { plan, review };
+      if (isCurrent) {
+        qc.setQueryData<WeekPlanDTO>(qk.week.plan(), (old) => (old ? { ...old, ...patch } : old));
+      }
+      return { plan, review, current, isCurrent };
     },
     onError: (error, _patch, ctx) => {
       qc.setQueryData(qk.week.plan(week), ctx?.plan);
       qc.setQueryData(qk.week.review(week), ctx?.review);
+      if (ctx?.isCurrent) qc.setQueryData(qk.week.plan(), ctx.current);
       toast.error(toApiError(error).message);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: qk.week.all }),
