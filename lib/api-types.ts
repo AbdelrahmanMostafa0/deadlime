@@ -14,6 +14,13 @@ export type TaskDTO = Jsonify<Task>;
 export type ProjectDTO = Jsonify<Project> & { openCount: number; doneCount: number; lastActivityAt: string };
 export type WeekPlanDTO = Jsonify<Omit<WeekPlan, "id">> & { id: string | null };
 
+export type ConnectionDTO = {
+  clientId: string;
+  name: string;
+  connectedAt: string;
+  lastUsedAt: string | null;
+};
+
 export type TaskMutationDTO = { task: TaskDTO; fired: RuleId[]; suggestComplete: boolean };
 
 export type ActivityDTO = {

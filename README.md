@@ -250,9 +250,16 @@ Each decision lists what was chosen, what was rejected, and why. Tags show who p
 
 49. **Two marks: the deadpan lime mascot for brand moments, the flat slice for small sizes.** The mascot (sign-in, 404, apple-touch and install icons, Open Graph image) carries the personality but its face blurs below ~48px. The slice (`LogoMark`, `app/icon.svg` favicon, sidebar, loading spinner) stays crisp at 16px and follows the color tokens. Mascot PNGs are cut down from the generated 1254px originals: 512px transparent for in-app use, padded on paper for iOS, which has no transparency.
 
+### Settings
+
+50. **A Settings page (`/settings`, `g s`) carries the profile, the Claude connect guide and the connected apps.** Before it, the only instructions lived in this README. The MCP URL shown there comes from `BETTER_AUTH_URL`, so it is the exact `resource` the tokens are issued for. On localhost the page says the Claude app can't reach it and points to Claude Code.
+51. **Disconnecting an app deletes the user's consent, access and refresh tokens for that client, straight in the DB.** The provider's revoke endpoint needs the client's own credentials, which the user doesn't have. Refresh stops at once, but an access token already issued is a JWT that `/api/mcp` verifies without a DB lookup, so it keeps working until it expires (1 hour). The toast says so.
+
 ---
 
 ## Connect Claude (MCP)
+
+The same steps, with copy buttons and the right URL filled in, are in the app under **Settings** (click your name in the sidebar).
 
 1. Apply the migrations (`npm run db:migrate`), including `0001_oauth_mcp.sql`, and deploy. `BETTER_AUTH_URL` must be the public origin with no trailing slash.
 2. In Claude: **Settings → Connectors → Add custom connector**, name it **Deadlime**, and enter URL **`<BETTER_AUTH_URL>/api/mcp`**. Leave the client credentials blank.

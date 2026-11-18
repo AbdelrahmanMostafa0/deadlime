@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarDays, Columns3, FolderKanban, Inbox, Sun, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarDays, Columns3, FolderKanban, Inbox, Settings, Sun, type LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; shortcut: string };
 
@@ -10,6 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/board", label: "Board", icon: Columns3, shortcut: "b" },
   { href: "/projects", label: "Projects", icon: FolderKanban, shortcut: "p" },
   { href: "/review", label: "Sunday review", icon: CalendarCheck, shortcut: "r" },
+  { href: "/settings", label: "Settings", icon: Settings, shortcut: "s" },
 ];
 
 /** Mobile bottom bar: the four most used, plus "More" and the capture button. */
