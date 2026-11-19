@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-const control =
+export const control =
   "w-full rounded-btn border-2 border-ink bg-card px-3.5 text-[15px] text-ink placeholder:text-ink-4 transition-spring focus-visible:shadow-pop-sm focus-visible:outline-none aria-invalid:border-danger";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {

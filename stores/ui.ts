@@ -1,5 +1,14 @@
 import { create } from "zustand";
 import type { TaskStatus } from "@/lib/domain";
+import type { TaskCreateInput } from "@/lib/validation";
+
+/** Fields the New task sheet can be opened with. */
+export type NewTaskDraft = Partial<
+  Pick<
+    TaskCreateInput,
+    "title" | "projectId" | "status" | "priority" | "dueDate" | "size" | "labels" | "description" | "subtasks"
+  >
+>;
 
 /**
  * UI-only state shared across distant components (shell, palette, sheets).
@@ -14,6 +23,13 @@ type UiState = {
   openPalette: (prefill?: string, status?: TaskStatus) => void;
   closePalette: () => void;
 
+  /** New task sheet: open flag, prefill, and whether the project is fixed (opened from a project page). */
+  newTaskOpen: boolean;
+  newTaskDraft: NewTaskDraft;
+  lockProject: boolean;
+  openNewTask: (draft?: NewTaskDraft, opts?: { lockProject?: boolean }) => void;
+  closeNewTask: () => void;
+
   /** Task open in the editor sheet, or null. */
   editingTaskId: string | null;
   openTask: (id: string) => void;
@@ -26,6 +42,12 @@ export const useUiStore = create<UiState>((set) => ({
   paletteStatus: null,
   openPalette: (prefill = "", status) => set({ paletteOpen: true, palettePrefill: prefill, paletteStatus: status ?? null }),
   closePalette: () => set({ paletteOpen: false, palettePrefill: "", paletteStatus: null }),
+
+  newTaskOpen: false,
+  newTaskDraft: {},
+  lockProject: false,
+  openNewTask: (draft = {}, opts) => set({ newTaskOpen: true, newTaskDraft: draft, lockProject: opts?.lockProject ?? false }),
+  closeNewTask: () => set({ newTaskOpen: false, newTaskDraft: {}, lockProject: false }),
 
   editingTaskId: null,
   openTask: (id) => set({ editingTaskId: id }),

@@ -2,15 +2,14 @@
 
 import { Lock, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/ui/empty-state";
-import { Select } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Chip } from "@/components/ui/tags";
 import { useGithubRepos, useLinkRepo, useProjectRepos, useUnlinkRepo } from "@/features/github/api";
 import { repoUrl } from "@/features/github/github-meta";
 import { copy } from "@/lib/copy";
+import { RepoPicker } from "./repo-picker";
 
 /** Repositories linked to a project, plus a picker for the user's other repos. */
 export function ProjectRepos({ projectId }: { projectId: string }) {
@@ -18,7 +17,6 @@ export function ProjectRepos({ projectId }: { projectId: string }) {
   const github = useGithubRepos();
   const link = useLinkRepo(projectId);
   const unlink = useUnlinkRepo(projectId);
-  const [pick, setPick] = useState("");
 
   const options = (github.data?.installations ?? [])
     .flatMap((i) => i.repos)
@@ -86,31 +84,7 @@ export function ProjectRepos({ projectId }: { projectId: string }) {
       )}
 
       {hasInstallation && (
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!pick) return;
-            link.mutate(Number(pick), { onSuccess: () => setPick("") });
-          }}
-        >
-          <Select
-            aria-label="Repository to link"
-            value={pick}
-            disabled={options.length === 0}
-            onChange={(e) => setPick(e.target.value)}
-          >
-            <option value="">{options.length === 0 ? "All your repos are linked" : "Pick a repo…"}</option>
-            {options.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.fullName}
-              </option>
-            ))}
-          </Select>
-          <Button type="submit" variant="lime" disabled={!pick || link.isPending}>
-            Add
-          </Button>
-        </form>
+        <RepoPicker options={options} disabled={link.isPending} onPick={(id) => link.mutate(id)} />
       )}
     </section>
   );

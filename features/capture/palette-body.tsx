@@ -12,6 +12,7 @@ import { ExistingTasksGroup } from "./existing-tasks-group";
 import { JumpGroup } from "./jump-group";
 import { PaletteFooter } from "./palette-footer";
 import { PaletteItem } from "./palette-item";
+import { draftFromCapture } from "@/features/new-task/new-task-form";
 import { ParsedChips } from "./parsed-chips";
 import { useCaptureSubmit } from "./use-capture-submit";
 import { useTaskSearch } from "./use-task-search";
@@ -19,7 +20,7 @@ import { useTaskSearch } from "./use-task-search";
 /** Mounted fresh on every open, so the input always starts clean (or prefilled). */
 export function PaletteBody() {
   const router = useRouter();
-  const { closePalette, openTask } = useUiStore();
+  const { closePalette, openTask, openNewTask } = useUiStore();
   const defaultStatus = useUiStore((s) => s.paletteStatus) ?? "this_week";
   const [text, setText] = useState(() => useUiStore.getState().palettePrefill);
   const projects = useProjects().data ?? [];
@@ -37,9 +38,15 @@ export function PaletteBody() {
     openTask(id);
   };
 
-  // Shift+Enter files into Backlog. Handled before cmdk sees the key.
+  // Shift+Enter files into Backlog; Cmd/Ctrl+Enter opens the New task sheet prefilled.
+  // Handled before cmdk sees the key.
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter" && e.shiftKey && !e.nativeEvent.isComposing) {
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      closePalette();
+      openNewTask(draftFromCapture(parsed, defaultStatus));
+    } else if (e.shiftKey) {
       e.preventDefault();
       submit(parsed, "backlog");
     }

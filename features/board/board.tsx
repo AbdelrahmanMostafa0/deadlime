@@ -32,7 +32,7 @@ export function Board() {
   const reorder = useReorderTask();
   const { scrollerRef, activeColumn, goTo } = useSnapColumns();
   useDragScroll(scrollerRef);
-  const openPalette = useUiStore((s) => s.openPalette);
+  const openNewTask = useUiStore((s) => s.openNewTask);
 
   const tasks = tasksQuery.data ?? [];
   const byId = new Map(tasks.map((t) => [t.id, t]));
@@ -90,7 +90,7 @@ export function Board() {
                   status={status}
                   count={dnd.items[status].length}
                   wip={status === "doing" ? wip : undefined}
-                  onAdd={status === "backlog" || status === "this_week" ? () => openPalette("", status) : undefined}
+                  onAdd={status === "backlog" || status === "this_week" ? () => openNewTask({ status }) : undefined}
                 />
               }
             >

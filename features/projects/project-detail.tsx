@@ -30,7 +30,7 @@ function BackLink() {
 export function ProjectDetail({ id }: { id: string }) {
   const { data: project, isPending, isError, error, refetch } = useProject(id);
   const { setArchived } = useArchiveProject();
-  const openPalette = useUiStore((s) => s.openPalette);
+  const openNewTask = useUiStore((s) => s.openNewTask);
   const [editing, setEditing] = useState(false);
 
   if (isPending) {
@@ -102,7 +102,7 @@ export function ProjectDetail({ id }: { id: string }) {
             <Link href={`/board?project=${project.id}`} className={cn(buttonVariants())}>
               <KanbanSquare aria-hidden className="size-4" /> Open board
             </Link>
-            <Button variant="lime" onClick={() => openPalette(`#${project.slug} `)}>
+            <Button variant="lime" onClick={() => openNewTask({ projectId: project.id }, { lockProject: true })}>
               <Plus aria-hidden className="size-4" /> Add task
             </Button>
           </div>
