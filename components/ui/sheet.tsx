@@ -14,6 +14,8 @@ type SheetProps = {
   hideTitle?: boolean;
   children: ReactNode;
   className?: string;
+  /** Children manage their own scrolling, e.g. a scrolling body above a pinned footer. */
+  selfScroll?: boolean;
   /** "sheet" = bottom sheet on mobile, centered on desktop. "palette" = top-anchored. */
   variant?: "sheet" | "palette";
 };
@@ -22,7 +24,16 @@ type SheetProps = {
  * Native <dialog> modal: focus trap, Esc to close, inert background and
  * top-layer stacking for free. Bottom sheet on mobile, centered card from md up.
  */
-export function Sheet({ open, onOpenChange, title, hideTitle, children, className, variant = "sheet" }: SheetProps) {
+export function Sheet({
+  open,
+  onOpenChange,
+  title,
+  hideTitle,
+  children,
+  className,
+  variant = "sheet",
+  selfScroll = false,
+}: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   // A text-selection drag that ends on the backdrop must not close the sheet.
   const pressedBackdrop = useRef(false);
@@ -75,7 +86,7 @@ export function Sheet({ open, onOpenChange, title, hideTitle, children, classNam
             <X aria-hidden className="size-5" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <div className={cn("min-h-0 flex-1", selfScroll ? "flex flex-col" : "overflow-y-auto")}>{children}</div>
       </div>
       {/* The open dialog makes the page inert; lib/toast.ts routes toasts here meanwhile. */}
       {open && <AppToaster modal />}

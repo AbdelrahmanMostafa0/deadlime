@@ -9,9 +9,9 @@ import type { SaveTask } from "./types";
 
 type MetaFieldsProps = { task: TaskDTO; onSave: SaveTask };
 
-const STATUS_OPTIONS = TASK_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }));
-const PRIORITY_OPTIONS = PRIORITIES.map((p) => ({ value: p, label: p }));
-const SIZE_OPTIONS: { value: Size | "none"; label: string }[] = [
+export const STATUS_OPTIONS = TASK_STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }));
+export const PRIORITY_OPTIONS = PRIORITIES.map((p) => ({ value: p, label: p }));
+export const SIZE_OPTIONS: { value: Size | "none"; label: string }[] = [
   ...SIZES.map((s) => ({ value: s, label: s })),
   { value: "none", label: "none" },
 ];

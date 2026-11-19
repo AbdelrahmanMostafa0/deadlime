@@ -9,7 +9,7 @@ export function PaletteFooter() {
         <b className="text-ink">today/tomorrow/fri</b> <b className="text-ink">~s/m/l</b>
       </p>
       <p className="flex items-center gap-1.5">
-        <Kbd>↵</Kbd> This Week <Kbd>⇧↵</Kbd> Backlog <Kbd>esc</Kbd> close
+        <Kbd>↵</Kbd> This Week <Kbd>⇧↵</Kbd> Backlog <Kbd>⌘</Kbd>/<Kbd>Ctrl</Kbd>+<Kbd>↵</Kbd> More options <Kbd>esc</Kbd> close
       </p>
     </footer>
   );
