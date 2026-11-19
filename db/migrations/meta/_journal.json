@@ -15,6 +15,13 @@
       "when": 1795017485628,
       "tag": "0001_oauth_mcp",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795089407718,
+      "tag": "0002_github",
+      "breakpoints": true
     }
   ]
 }

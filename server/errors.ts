@@ -1,6 +1,14 @@
 /** Domain errors thrown by services and mapped to HTTP / MCP responses. */
 
-export type AppErrorCode = "not_found" | "conflict" | "wip_limit" | "invalid" | "unauthorized" | "forbidden";
+export type AppErrorCode =
+  | "not_found"
+  | "conflict"
+  | "wip_limit"
+  | "invalid"
+  | "unauthorized"
+  | "forbidden"
+  | "unavailable"
+  | "not_configured";
 
 const STATUS: Record<AppErrorCode, number> = {
   not_found: 404,
@@ -9,6 +17,8 @@ const STATUS: Record<AppErrorCode, number> = {
   invalid: 400,
   unauthorized: 401,
   forbidden: 403,
+  unavailable: 503,
+  not_configured: 503,
 };
 
 export class AppError extends Error {

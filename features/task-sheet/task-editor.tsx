@@ -6,6 +6,7 @@ import { useUpdateTask } from "@/features/tasks/use-update-task";
 import { ActivityLog } from "./activity-log";
 import { DescriptionField } from "./description-field";
 import { DueDateField } from "./due-date-field";
+import { GithubField } from "./github-field";
 import { LabelsField } from "./labels-field";
 import { MetaFields } from "./meta-fields";
 import { SheetFooter } from "./sheet-footer";
@@ -39,6 +40,7 @@ export function TaskEditor({ task, isPlaceholder = false, onClose }: TaskEditorP
         <DueDateField task={task} onSave={save} />
         <LabelsField task={task} onSave={save} />
         <SubtasksField task={task} onSave={save} />
+        <GithubField task={task} />
         {/* Tiptap reads content once at mount: remount when live data replaces the placeholder. */}
         <DescriptionField key={isPlaceholder ? "placeholder" : "live"} task={task} onSave={save} />
         <ActivityLog taskId={task.id} />

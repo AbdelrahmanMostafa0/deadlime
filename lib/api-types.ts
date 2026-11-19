@@ -1,5 +1,5 @@
-import type { Project, Task, WeekPlan } from "@/db/schema";
-import type { RuleId } from "./domain";
+import type { Project, Task, TaskLink, WeekPlan } from "@/db/schema";
+import type { LinkState, LinkTargetKind, RuleId } from "./domain";
 
 /** What a value looks like after JSON.stringify: Dates become strings. */
 export type Jsonify<T> = T extends Date
@@ -41,6 +41,38 @@ export type WeekReviewDTO = {
   done: { id: string; title: string; projectId: string | null }[];
   slipped: { id: string; title: string; projectId: string | null; dueDate: string | null }[];
   open: { id: string; title: string; projectId: string | null; status: string; dueDate: string | null }[];
+};
+
+export type GithubRepoDTO = {
+  id: number;
+  fullName: string;
+  defaultBranch: string;
+  private: boolean;
+  archived: boolean;
+};
+
+export type GithubReposDTO = {
+  installations: {
+    id: number;
+    accountLogin: string;
+    accountType: string;
+    suspended: boolean;
+    repos: (GithubRepoDTO & { projectIds: string[] })[];
+  }[];
+};
+
+export type ProjectRepoDTO = GithubRepoDTO & { importIssues: boolean };
+
+export type TaskLinkDTO = Jsonify<Omit<TaskLink, "userId">> & { repo: string };
+
+export type GithubSearchHitDTO = {
+  repo: string;
+  kind: Extract<LinkTargetKind, "issue" | "pr">;
+  number: number;
+  title: string;
+  state: LinkState;
+  url: string;
+  linkedTaskIds: string[];
 };
 
 export type ApiErrorBody = { error: { code: string; message: string; count?: number; limit?: number } };

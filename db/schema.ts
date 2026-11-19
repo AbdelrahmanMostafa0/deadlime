@@ -1,19 +1,25 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
+  boolean,
   date,
   index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import {
   ACTIVITY_SOURCES,
   ENTITY_TYPES,
+  LINK_STATES,
+  LINK_TARGET_KINDS,
   PRIORITIES,
   PROJECT_STATUSES,
   SIZES,
@@ -34,6 +40,8 @@ export const size = pgEnum("size", SIZES);
 export const projectStatus = pgEnum("project_status", PROJECT_STATUSES);
 export const activitySource = pgEnum("activity_source", ACTIVITY_SOURCES);
 export const entityType = pgEnum("entity_type", ENTITY_TYPES);
+export const taskLinkKind = pgEnum("task_link_kind", LINK_TARGET_KINDS);
+export const taskLinkState = pgEnum("task_link_state", LINK_STATES);
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -143,6 +151,93 @@ export const activityLog = pgTable(
   ],
 );
 
+/** A GitHub App installation a user connected. The id is GitHub's installation id. */
+export const githubInstallation = pgTable("github_installation", {
+  id: bigint("id", { mode: "number" }).primaryKey(),
+  userId: owner(),
+  accountLogin: text("account_login").notNull(),
+  accountType: text("account_type").notNull(),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  ...timestamps,
+});
+
+/** A repository the installation can see. The id is GitHub's repository id. */
+export const githubRepo = pgTable(
+  "github_repo",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey(),
+    installationId: bigint("installation_id", { mode: "number" })
+      .notNull()
+      .references(() => githubInstallation.id, { onDelete: "cascade" }),
+    userId: owner(),
+    fullName: text("full_name").notNull(),
+    defaultBranch: text("default_branch").notNull(),
+    private: boolean("private").notNull(),
+    archived: boolean("archived").notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("github_repo_user_idx").on(t.userId),
+    unique("github_repo_user_name_uq").on(t.userId, t.fullName),
+  ],
+);
+
+export const projectRepo = pgTable(
+  "project_repo",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    repoId: bigint("repo_id", { mode: "number" })
+      .notNull()
+      .references(() => githubRepo.id, { onDelete: "cascade" }),
+    userId: owner(),
+    importIssues: boolean("import_issues").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.repoId] })],
+);
+
+export const taskLink = pgTable(
+  "task_link",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: owner(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    repoId: bigint("repo_id", { mode: "number" })
+      .notNull()
+      .references(() => githubRepo.id, { onDelete: "cascade" }),
+    kind: taskLinkKind("kind").notNull(),
+    /** Issue / PR number. Null for branches. */
+    number: integer("number"),
+    /** Branch name. Null for issues and PRs. */
+    ref: text("ref"),
+    url: text("url").notNull(),
+    title: text("title").notNull(),
+    state: taskLinkState("state").notNull(),
+    ciStatus: text("ci_status"),
+    drift: boolean("drift").notNull().default(false),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("task_link_target_uq").on(t.taskId, t.repoId, t.kind, t.number, t.ref).nullsNotDistinct(),
+    index("task_link_repo_kind_number_idx").on(t.repoId, t.kind, t.number),
+  ],
+);
+
+/** Webhook deliveries already handled, so GitHub retries are no-ops. */
+export const githubDelivery = pgTable("github_delivery", {
+  id: text("id").primaryKey(),
+  event: text("event").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type GithubInstallation = typeof githubInstallation.$inferSelect;
+export type GithubRepo = typeof githubRepo.$inferSelect;
+export type TaskLink = typeof taskLink.$inferSelect;
 export type Project = typeof project.$inferSelect;
 export type Task = typeof task.$inferSelect;
 export type WeekPlan = typeof weekPlan.$inferSelect;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { textToDoc } from "@/lib/rich-text";
 import { taskCreateSchema, taskListQuerySchema, taskUpdateSchema } from "@/lib/validation";
 import { AppError } from "@/server/errors";
+import { listTaskLinks } from "@/server/services/github/links";
 import { listProjects } from "@/server/services/projects";
 import {
   createTask,
@@ -14,7 +15,7 @@ import {
   updateTask,
 } from "@/server/services/tasks";
 import { mcpActor, timezoneSchema, toolResult } from "../context";
-import { formatTask } from "../format";
+import { formatTask, formatTaskLink } from "../format";
 import { resolveProject } from "../resolve";
 
 const project = z.string().trim().min(1).max(200);
@@ -74,6 +75,26 @@ export function registerTaskTools(server: McpServer, userId: string) {
           tasks: tasks.slice(0, cap).map((t) => formatTask(t, projects)),
           truncated: tasks.length > cap || tasks.length === 1000,
         };
+      }),
+  );
+
+  server.registerTool(
+    "get_task",
+    {
+      description:
+        "Get one task by exact id, with its notes, subtasks and linked GitHub issues, pull requests and branches.",
+      inputSchema: z.object({ id: z.uuid() }),
+      annotations: { readOnlyHint: true },
+    },
+    (args) =>
+      toolResult(async () => {
+        const actor = mcpActor(userId);
+        const [found, projects, links] = await Promise.all([
+          getTask(actor, args.id),
+          listProjects(actor, { includeArchived: true }),
+          listTaskLinks(actor, args.id),
+        ]);
+        return { ...formatTask(found, projects), links: links.map(formatTaskLink) };
       }),
   );
 
