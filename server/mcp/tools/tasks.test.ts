@@ -1,9 +1,18 @@
 import { createMcpHandler } from "mcp-handler";
 import { expect, it, vi } from "vitest";
 import type { Task } from "@/db/schema";
-import { registerTaskTools } from "./tasks";
+import { registerTaskTools, resolveOrderedIds } from "./tasks";
 import { AppError } from "@/server/errors";
-import { createTask, deleteTask, restoreTask, updateTask } from "@/server/services/tasks";
+import { addDaysISO } from "@/lib/dates";
+import {
+  createTask,
+  deleteTask,
+  getTask,
+  listTasks,
+  reorderTasks,
+  restoreTask,
+  updateTask,
+} from "@/server/services/tasks";
 
 vi.mock("@/server/services/projects", () => ({
   listProjects: vi.fn(async () => [
@@ -19,7 +28,9 @@ vi.mock("@/server/services/tasks", () => ({
   searchTasks: vi.fn(),
   deleteTask: vi.fn(),
   restoreTask: vi.fn(),
+  reorderTasks: vi.fn(),
 }));
+vi.mock("@/server/services/week-plans", () => ({ getWipLimit: vi.fn(async () => 3) }));
 
 const task: Task = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -142,4 +153,95 @@ it("delete is soft and restore brings the task back", async () => {
     task.id,
   );
   expect(await call("restore_task", { id: task.id })).toContain("Ship");
+});
+
+const payloadOf = (response: string) =>
+  JSON.parse(JSON.parse(response.split("data: ")[1] ?? response).result.content[0].text);
+
+it("snoozedUntil flows to updateTask unchanged", async () => {
+  vi.mocked(updateTask).mockResolvedValueOnce({ task, fired: [], suggestComplete: false });
+  await call("update_task", { id: task.id, snoozedUntil: "2026-12-01" });
+  expect(updateTask).toHaveBeenLastCalledWith(expect.anything(), task.id, { snoozedUntil: "2026-12-01" });
+});
+
+it("move_task splices the task into its column at a clamped position", async () => {
+  const column = ["a", "b", task.id, "c"].map((id) => ({ ...task, id }));
+  vi.mocked(getTask).mockResolvedValue(task);
+  vi.mocked(listTasks).mockResolvedValue(column);
+  vi.mocked(reorderTasks).mockResolvedValue({ task, fired: [], suggestComplete: false });
+
+  await call("move_task", { id: task.id, position: 0 });
+  expect(listTasks).toHaveBeenLastCalledWith(expect.anything(), { status: "this_week" });
+  expect(reorderTasks).toHaveBeenLastCalledWith(expect.objectContaining({ source: "mcp" }), {
+    taskId: task.id,
+    status: "this_week",
+    orderedIds: [task.id, "a", "b", "c"],
+    force: undefined,
+  });
+
+  await call("move_task", { id: task.id, status: "doing", position: 99, force: true });
+  expect(vi.mocked(reorderTasks).mock.lastCall?.[1]).toMatchObject({
+    status: "doing",
+    orderedIds: ["a", "b", "c", task.id],
+    force: true,
+  });
+});
+
+it("resolveOrderedIds places the task before or after a neighbour", () => {
+  const column = ["a", "b", "me", "c"];
+  expect(resolveOrderedIds(column, "me", "doing", { before: "a" })).toEqual(["me", "a", "b", "c"]);
+  expect(resolveOrderedIds(column, "me", "doing", { before: "c" })).toEqual(["a", "b", "me", "c"]);
+  expect(resolveOrderedIds(column, "me", "doing", { after: "a" })).toEqual(["a", "me", "b", "c"]);
+  expect(resolveOrderedIds(column, "me", "doing", { after: "c" })).toEqual(["a", "b", "c", "me"]);
+  expect(resolveOrderedIds(column, "me", "doing", { position: 1 })).toEqual(["a", "me", "b", "c"]);
+});
+
+it("resolveOrderedIds rejects a missing neighbour or itself", () => {
+  const column = ["a", "me"];
+  expect(() => resolveOrderedIds(column, "me", "doing", { before: "zzz" })).toThrow(
+    "before task is not in the doing column.",
+  );
+  expect(() => resolveOrderedIds(column, "me", "doing", { after: "me" })).toThrow(
+    "after task is not in the doing column.",
+  );
+});
+
+it("resolveOrderedIds needs exactly one of position, before, after", () => {
+  const column = ["a", "me"];
+  expect(() => resolveOrderedIds(column, "me", "doing", {})).toThrow(AppError);
+  expect(() => resolveOrderedIds(column, "me", "doing", { position: 0, after: "a" })).toThrow(AppError);
+  expect(() => resolveOrderedIds(column, "me", "doing", { before: "a", after: "a" })).toThrow(AppError);
+});
+
+it("move_task with after sends the computed order to reorderTasks", async () => {
+  const other = "22222222-2222-4222-8222-222222222222";
+  const column = [task.id, other].map((id) => ({ ...task, id }));
+  vi.mocked(getTask).mockResolvedValue(task);
+  vi.mocked(listTasks).mockResolvedValue(column);
+  vi.mocked(reorderTasks).mockResolvedValue({ task, fired: [], suggestComplete: false });
+  await call("move_task", { id: task.id, after: other });
+  expect(vi.mocked(reorderTasks).mock.lastCall?.[1]).toMatchObject({ orderedIds: [other, task.id] });
+});
+
+it("get_today buckets overdue, due today and doing with the WIP count", async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const make = (id: string, status: Task["status"], dueDate: string | null) => ({
+    ...task,
+    id,
+    status,
+    dueDate,
+  });
+  vi.mocked(listTasks).mockResolvedValue([
+    make("late", "this_week", addDaysISO(today, -2)),
+    make("now", "backlog", today),
+    make("busy", "doing", addDaysISO(today, -1)),
+    make("later", "backlog", addDaysISO(today, 3)),
+  ]);
+  const payload = payloadOf(await call("get_today", {}));
+  expect(listTasks).toHaveBeenLastCalledWith(expect.anything(), { view: "today" });
+  expect(payload.today).toBe(today);
+  expect(payload.overdue.map((t: { id: string }) => t.id)).toEqual(["late"]);
+  expect(payload.dueToday.map((t: { id: string }) => t.id)).toEqual(["now"]);
+  expect(payload.doing.map((t: { id: string }) => t.id)).toEqual(["busy"]);
+  expect(payload.wip).toEqual({ doing: 1, limit: 3 });
 });

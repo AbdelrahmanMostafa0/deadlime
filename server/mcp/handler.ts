@@ -3,6 +3,7 @@ import { requireMcpAuth } from "@better-auth/mcp";
 import { createMcpHandler } from "mcp-handler";
 import { getAuth } from "@/lib/auth";
 import { serverEnv } from "@/lib/env";
+import { registerActivityTools } from "./tools/activity";
 import { registerGithubTools } from "./tools/github";
 import { registerProjectTools } from "./tools/projects";
 import { registerTaskTools } from "./tools/tasks";
@@ -21,6 +22,7 @@ export async function handleMcp(request: Request) {
         (server) => {
           registerProjectTools(server, userId);
           registerTaskTools(server, userId);
+          registerActivityTools(server, userId);
           registerWeekTools(server, userId);
           registerGithubTools(server, userId);
         },
