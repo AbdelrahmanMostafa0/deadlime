@@ -1,15 +1,18 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { textToDoc } from "@/lib/rich-text";
+import { TASK_STATUSES } from "@/lib/domain";
 import { taskCreateSchema, taskListQuerySchema, taskUpdateSchema } from "@/lib/validation";
 import { AppError } from "@/server/errors";
 import { listTaskLinks } from "@/server/services/github/links";
 import { listProjects } from "@/server/services/projects";
+import { getWipLimit } from "@/server/services/week-plans";
 import {
   createTask,
   deleteTask,
   getTask,
   listTasks,
+  reorderTasks,
   restoreTask,
   searchTasks,
   updateTask,
@@ -31,6 +34,32 @@ const newTask = taskUpdateSchema
     subtasks: z.array(subtaskTitle).max(50).optional(),
   });
 const MAX_BULK = 50;
+const FORCE_NOTE = "force overrides the Doing WIP limit only with user agreement.";
+
+/** Column ids with `id` removed, then re-inserted at `position` (clamped to the column length). */
+export function buildOrderedIds(columnIds: readonly string[], id: string, position: number) {
+  const orderedIds = columnIds.filter((existing) => existing !== id);
+  orderedIds.splice(Math.min(Math.max(position, 0), orderedIds.length), 0, id);
+  return orderedIds;
+}
+
+/** Resolve exactly one of position, before or after into the new column order. */
+export function resolveOrderedIds(
+  columnIds: readonly string[],
+  id: string,
+  status: string,
+  target: { position?: number; before?: string; after?: string },
+) {
+  const given = [target.position, target.before, target.after].filter((v) => v !== undefined).length;
+  if (given !== 1) throw new AppError("invalid", "Give exactly one of position, before or after.");
+  if (target.position !== undefined) return buildOrderedIds(columnIds, id, target.position);
+  const side = target.before !== undefined ? "before" : "after";
+  const neighbour = target.before ?? target.after;
+  const others = columnIds.filter((existing) => existing !== id);
+  const index = neighbour === undefined || neighbour === id ? -1 : others.indexOf(neighbour);
+  if (index === -1) throw new AppError("invalid", `${side} task is not in the ${status} column.`);
+  return buildOrderedIds(columnIds, id, side === "before" ? index : index + 1);
+}
 
 /** Map an MCP task payload to the service input, resolving the project reference exactly. */
 function toCreateInput(args: z.infer<typeof newTask>, projects: Parameters<typeof resolveProject>[0]) {
@@ -40,6 +69,25 @@ function toCreateInput(args: z.infer<typeof newTask>, projects: Parameters<typeo
     projectId: reference ? resolveProject(projects, reference) : null,
     description: plain === undefined ? undefined : textToDoc(plain),
     subtasks: subtasks?.map((title) => ({ id: crypto.randomUUID(), title, done: false })),
+  };
+}
+
+/** Split today's tasks into overdue, due today and doing. */
+export function bucketToday(
+  today: string,
+  tasks: Parameters<typeof formatTask>[0][],
+  projects: Parameters<typeof formatTask>[1],
+  limit: number,
+) {
+  const format = (t: (typeof tasks)[number]) => formatTask(t, projects);
+  const open = tasks.filter((t) => t.status !== "doing");
+  const doing = tasks.filter((t) => t.status === "doing");
+  return {
+    today,
+    overdue: open.filter((t) => t.dueDate !== null && t.dueDate < today).map(format),
+    dueToday: open.filter((t) => t.dueDate === today).map(format),
+    doing: doing.map(format),
+    wip: { doing: doing.length, limit },
   };
 }
 
@@ -146,7 +194,7 @@ export function registerTaskTools(server: McpServer, userId: string) {
     "update_task",
     {
       description:
-        "Change a task by exact id. project: null moves to Inbox; dueDate: null clears the date. Subtasks replace the whole list. force overrides the Doing WIP limit only with user agreement.",
+        "Change a task by exact id. project: null moves to Inbox; dueDate: null clears the date. snoozedUntil hides the task from Today until that date; null clears it. Subtasks replace the whole list. force overrides the Doing WIP limit only with user agreement.",
       inputSchema: taskUpdateSchema
         .pick({
           title: true,
@@ -155,6 +203,7 @@ export function registerTaskTools(server: McpServer, userId: string) {
           labels: true,
           dueDate: true,
           size: true,
+          snoozedUntil: true,
           force: true,
         })
         .extend({
@@ -197,6 +246,68 @@ export function registerTaskTools(server: McpServer, userId: string) {
           fired: result.fired,
           suggestComplete: result.suggestComplete,
         };
+      }),
+  );
+
+  server.registerTool(
+    "move_task",
+    {
+      description: `Move a task by exact id to a status column. Give exactly one of: position (0 = top; clamped to the column length), before (id of the task to sit directly above), or after (id of the task to sit directly below); the neighbour must be in the target column. status defaults to the task's current status. ${FORCE_NOTE}`,
+      inputSchema: z.object({
+        id: z.uuid(),
+        status: z.enum(TASK_STATUSES).optional(),
+        position: z.number().int().min(0).optional(),
+        before: z.uuid().optional(),
+        after: z.uuid().optional(),
+        force: z.boolean().optional(),
+        timezone: timezoneSchema,
+      }),
+    },
+    (args) =>
+      toolResult(async () => {
+        const actor = mcpActor(userId, args.timezone);
+        const current = await getTask(actor, args.id);
+        const status = args.status ?? current.status;
+        const [column, projects] = await Promise.all([
+          listTasks(actor, { status }),
+          listProjects(actor, { includeArchived: true }),
+        ]);
+        const result = await reorderTasks(actor, {
+          taskId: args.id,
+          status,
+          orderedIds: resolveOrderedIds(
+            column.map((t) => t.id),
+            args.id,
+            status,
+            args,
+          ),
+          force: args.force,
+        });
+        return {
+          task: formatTask(result.task, projects),
+          fired: result.fired,
+          suggestComplete: result.suggestComplete,
+        };
+      }),
+  );
+
+  server.registerTool(
+    "get_today",
+    {
+      description:
+        "What needs attention today: overdue and due-today tasks (not in Doing), tasks in Doing, and the Doing WIP count against its limit. Supply timezone for local today.",
+      inputSchema: z.object({ timezone: timezoneSchema }),
+      annotations: { readOnlyHint: true },
+    },
+    (args) =>
+      toolResult(async () => {
+        const actor = mcpActor(userId, args.timezone);
+        const [tasks, projects, limit] = await Promise.all([
+          listTasks(actor, { view: "today" }),
+          listProjects(actor, { includeArchived: true }),
+          getWipLimit(actor),
+        ]);
+        return bucketToday(actor.today, tasks, projects, limit);
       }),
   );
 
