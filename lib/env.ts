@@ -1,4 +1,5 @@
 import "server-only";
+import { createPrivateKey } from "node:crypto";
 import { z } from "zod";
 
 const optional = z
@@ -52,6 +53,15 @@ export type GithubAppConfig = {
   webhookSecret: string;
 };
 
+/**
+ * GitHub downloads App keys as PKCS#1 (`BEGIN RSA PRIVATE KEY`), but @octokit/app signs with
+ * WebCrypto, which only takes PKCS#8. Accept either, on one line with literal "\n" or multi-line.
+ */
+function toPkcs8(pem: string): string {
+  const normalized = pem.replaceAll("\\n", "\n");
+  return createPrivateKey(normalized).export({ type: "pkcs8", format: "pem" }).toString();
+}
+
 /** GitHub App settings, or null when any of them is missing (the integration is then off). */
 export function githubAppConfig(): GithubAppConfig | null {
   const env = serverEnv();
@@ -69,8 +79,7 @@ export function githubAppConfig(): GithubAppConfig | null {
   return {
     appId: GITHUB_APP_ID,
     slug: GITHUB_APP_SLUG,
-    // The PEM is often stored on one line with literal "\n" sequences.
-    privateKey: GITHUB_APP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    privateKey: toPkcs8(GITHUB_APP_PRIVATE_KEY),
     clientId: GITHUB_APP_CLIENT_ID,
     clientSecret: GITHUB_APP_CLIENT_SECRET,
     webhookSecret: GITHUB_WEBHOOK_SECRET,
