@@ -149,3 +149,17 @@ export const weekReviewSchema = z.object({
   dropIds: z.array(z.uuid()).max(500).default([]),
 });
 export type WeekReviewInput = z.input<typeof weekReviewSchema>;
+
+export const projectRepoLinkSchema = z.object({ repoId: z.number().int().positive() });
+export type ProjectRepoLinkInput = z.infer<typeof projectRepoLinkSchema>;
+
+/** What a user pastes to link a task: a GitHub issue/PR/branch URL, `owner/repo#12` or `owner/repo@branch`. */
+export const taskLinkCreateSchema = z.object({ ref: z.string().trim().min(1).max(2048) });
+export type TaskLinkCreateInput = z.infer<typeof taskLinkCreateSchema>;
+
+export const githubSearchQuerySchema = z.object({
+  q: z.string().trim().min(1).max(200),
+  projectId: z.uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+export type GithubSearchQuery = z.infer<typeof githubSearchQuerySchema>;

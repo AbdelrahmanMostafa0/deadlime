@@ -22,6 +22,15 @@ describe("describeActivity", () => {
     expect(describeActivity({ action: "updated", meta: {} })).toBe("Edited");
   });
 
+  it("describes GitHub links", () => {
+    expect(describeActivity({ action: "linked", meta: { kind: "pr", number: 12, url: "u" } })).toBe("Linked PR #12");
+    expect(describeActivity({ action: "linked", meta: { kind: "issue", number: 3 } })).toBe("Linked issue #3");
+    expect(describeActivity({ action: "unlinked", meta: { kind: "branch", ref: "feat/x" } })).toBe(
+      "Unlinked branch feat/x",
+    );
+    expect(describeActivity({ action: "linked", meta: {} })).toBe("Linked GitHub item");
+  });
+
   it("maps simple actions and falls back to a capitalized action", () => {
     expect(describeActivity({ action: "completed", meta: {} })).toBe("Marked done");
     expect(describeActivity({ action: "snoozed_forever", meta: {} })).toBe("Snoozed forever");

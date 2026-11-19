@@ -24,6 +24,14 @@ const FIELD_LABEL: Record<string, string> = {
 
 const isStatus = (v: unknown): v is TaskStatus => TASK_STATUSES.some((s) => s === v);
 
+/** "PR #12", "issue #3" or "branch main" from a linked/unlinked entry's meta. */
+function linkLabel(meta: ActivityDTO["meta"]): string {
+  const noun = meta.kind === "pr" ? "PR" : meta.kind === "issue" ? "issue" : meta.kind === "branch" ? "branch" : "GitHub item";
+  if (typeof meta.number === "number") return `${noun} #${meta.number}`;
+  if (typeof meta.ref === "string") return `${noun} ${meta.ref}`;
+  return noun;
+}
+
 /** One-line human text for an activity entry ("Moved to Doing", "Edited title, labels"). */
 export function describeActivity(entry: Pick<ActivityDTO, "action" | "meta">): string {
   const { action, meta } = entry;
@@ -40,6 +48,10 @@ export function describeActivity(entry: Pick<ActivityDTO, "action" | "meta">): s
       return "Restored";
     case "reordered":
       return "Reordered";
+    case "linked":
+      return `Linked ${linkLabel(meta)}`;
+    case "unlinked":
+      return `Unlinked ${linkLabel(meta)}`;
     case "moved":
       return isStatus(meta.to) ? `Moved to ${STATUS_LABEL[meta.to]}` : "Moved";
     case "updated": {

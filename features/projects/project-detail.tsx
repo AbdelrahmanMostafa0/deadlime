@@ -13,6 +13,7 @@ import { useUiStore } from "@/stores/ui";
 import { useProject } from "./api";
 import { ProjectFormSheet } from "./project-form-sheet";
 import { ProjectIcon } from "./project-icon";
+import { ProjectRepos } from "./project-repos";
 import { ProjectLinks } from "./project-links";
 import { ProjectTasks } from "./project-tasks";
 import { STATUS_TEXT } from "./project-meta";
@@ -91,6 +92,8 @@ export function ProjectDetail({ id }: { id: string }) {
           </p>
         </section>
       )}
+
+      <ProjectRepos projectId={project.id} />
 
       <section aria-labelledby="tasks-h">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

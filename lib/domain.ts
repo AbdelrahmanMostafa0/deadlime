@@ -30,6 +30,12 @@ export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
 export const ENTITY_TYPES = ["project", "task", "week_plan"] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
+export const LINK_TARGET_KINDS = ["issue", "pr", "branch"] as const;
+export type LinkTargetKind = (typeof LINK_TARGET_KINDS)[number];
+
+export const LINK_STATES = ["open", "closed", "merged", "draft"] as const;
+export type LinkState = (typeof LINK_STATES)[number];
+
 /** Built-in automation rule ids, recorded in ActivityLog.rule. */
 export const RULES = [
   "done_moves_to_done",

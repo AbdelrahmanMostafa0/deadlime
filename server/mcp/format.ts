@@ -1,5 +1,5 @@
 import type { WeekPlanView } from "@/server/services/week-plans";
-import type { Project, Task } from "@/db/schema";
+import type { Project, Task, TaskLink } from "@/db/schema";
 import { docToText } from "@/lib/rich-text";
 
 type ProjectSummary = Pick<Project, "id" | "name" | "slug" | "status" | "archivedAt"> &
@@ -52,5 +52,18 @@ export function formatWeekPlan(plan: WeekPlanView, projects: { id: string; name:
       id,
       name: projects.find((p) => p.id === id)?.name ?? null,
     })),
+  };
+}
+
+type TaskLinkSummary = Pick<TaskLink, "kind" | "number" | "ref" | "title" | "state" | "url"> & { repo: string };
+
+export function formatTaskLink(l: TaskLinkSummary) {
+  return {
+    kind: l.kind,
+    repo: l.repo,
+    ...(l.number === null ? { ref: l.ref } : { number: l.number }),
+    title: l.title,
+    state: l.state,
+    url: l.url,
   };
 }

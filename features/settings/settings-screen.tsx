@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shell/app-shell";
+import { GithubSettings } from "@/features/github/github-settings";
 import { serverEnv } from "@/lib/env";
 import { getSessionUser } from "@/server/session";
 import { ConnectClaude } from "./connect-claude";
@@ -39,12 +40,18 @@ export async function SettingsScreen() {
             <ConnectClaude mcpUrl={mcpUrl} />
           </Section>
         </div>
-        <div className="xl:col-start-2">
+        <div className="flex flex-col gap-10 xl:col-start-2">
           <Section
             title="Connected apps"
             body="Everything you've let in. Disconnect anything you don't recognize."
           >
             <ConnectionsList />
+          </Section>
+          <Section
+            title="GitHub"
+            body="Link repos to projects and issues, PRs and branches to tasks."
+          >
+            <GithubSettings />
           </Section>
         </div>
       </div>

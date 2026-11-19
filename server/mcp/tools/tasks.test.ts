@@ -10,6 +10,7 @@ vi.mock("@/server/services/projects", () => ({
     { id: "22222222-2222-4222-8222-222222222222", name: "Taanaq", slug: "taanaq" },
   ]),
 }));
+vi.mock("@/server/services/github/links", () => ({ listTaskLinks: vi.fn(async () => []) }));
 vi.mock("@/server/services/tasks", () => ({
   createTask: vi.fn(),
   updateTask: vi.fn(),
