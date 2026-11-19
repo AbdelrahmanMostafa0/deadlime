@@ -245,16 +245,30 @@ export async function reorderTasks(actor: Actor, raw: TaskReorderInput): Promise
   await assertWip(actor, before.status, statusChanged ? input.status : undefined, input.force);
 
   const db = getDb();
-  const [first, ...rest] = input.orderedIds.map((id, index) =>
-    db
-      .update(task)
-      .set(id === input.taskId ? { ...patch, order: index } : { order: index })
-      .where(and(eq(task.id, id), own(actor), id === input.taskId ? undefined : eq(task.status, input.status)))
-      .returning(),
+  const currentOrders = await db
+    .select({ id: task.id, order: task.order })
+    .from(task)
+    .where(and(inArray(task.id, input.orderedIds), own(actor)));
+  const orderById = new Map(currentOrders.map((row) => [row.id, row.order]));
+  const moveUpdate = db
+    .update(task)
+    .set({ ...patch, order: input.orderedIds.indexOf(input.taskId) })
+    .where(and(eq(task.id, input.taskId), own(actor)))
+    .returning();
+  const reorderUpdates = input.orderedIds.flatMap((id, index) =>
+    id === input.taskId || orderById.get(id) === index
+      ? []
+      : [
+          db
+            .update(task)
+            .set({ order: index })
+            .where(and(eq(task.id, id), own(actor), eq(task.status, input.status)))
+            .returning(),
+        ],
   );
   const results = await db.batch([
-    first,
-    ...rest,
+    moveUpdate,
+    ...reorderUpdates,
     activityInsert(db, actor, [
       ...ruleEntries(input.taskId, fired, before.status, input.status),
       {
@@ -265,10 +279,8 @@ export async function reorderTasks(actor: Actor, raw: TaskReorderInput): Promise
       },
     ]),
   ]);
-  const moved = results
-    .slice(0, input.orderedIds.length)
-    .flat()
-    .find((t): t is Task => (t as Task | undefined)?.id === input.taskId);
+  // The moved task's update is always first in the batch.
+  const [moved] = results[0] as Task[];
   if (!moved) throw notFound("Task");
   return { task: moved, fired, suggestComplete };
 }
